@@ -7,6 +7,22 @@ on:
     branches: [ main ]
 
 jobs:
+  lint-asciidoc:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Установка Asciidoctor
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ruby-dev
+          gem install asciidoctor
+
+      - name: Проверка .adoc файлов
+        run: |
+          find docs -name "*.adoc" -exec asciidoctor --trace -o /dev/null {} \; || (echo "Ошибка в AsciiDoc" && exit 1)
+    
   lint-markdown:
     runs-on: ubuntu-latest
     steps:
