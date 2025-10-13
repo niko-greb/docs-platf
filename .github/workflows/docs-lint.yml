@@ -28,4 +28,4 @@ jobs:
       - name: Проверка ссылок
         uses: lycheeorg/lychee-action@v1
         with:
-          args: "*.md" "docs/**/*.md"
+          args: "*.md docs/**/*.md"
