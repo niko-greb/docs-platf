@@ -1,0 +1,11 @@
+stages:
+  - lint
+
+lint-markdown:
+  stage: lint
+  image: node:18-alpine
+  script:
+    - npm install -g markdownlint-cli
+    - markdownlint "**/*.md" --config .markdownlint.json || exit 1
+  rules:
+    - if: $CI_COMMIT_BRANCH
