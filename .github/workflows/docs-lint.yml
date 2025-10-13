@@ -1,0 +1,31 @@
+name: Проверка документации
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lint-markdown:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout кода
+        uses: actions/checkout@v3
+
+      - name: Установка MarkdownLint
+        run: npm install -g markdownlint-cli
+
+      - name: Проверка Markdown
+        run: markdownlint "**/*.md" --config .markdownlint.json || exit 1
+
+  validate-links:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout кода
+        uses: actions/checkout@v3
+
+      - name: Проверка ссылок
+        uses: lycheeorg/lychee-action@v1
+        with:
+          args: "*.md" "docs/**/*.md"
