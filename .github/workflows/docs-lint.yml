@@ -25,7 +25,8 @@ jobs:
       - name: Checkout кода
         uses: actions/checkout@v3
 
-      - name: Проверка ссылок
-        uses: lycheeorg/lychee-action@v1
-        with:
-          args: "*.md docs/**/*.md"
+      - name: Установка Lychee (проверка ссылок)
+        uses: cathalgarvey/setup-lychee@v1
+
+      - name: Проверка битых ссылок
+        run: lychee "*.md" "docs/**/*.md"
