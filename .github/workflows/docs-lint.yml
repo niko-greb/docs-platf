@@ -25,8 +25,8 @@ jobs:
       - name: Checkout кода
         uses: actions/checkout@v3
 
-      - name: Установка Lychee (проверка ссылок)
-        uses: cathalgarvey/setup-lychee@v1
+      - name: Установка Lychee (через Cargo)
+        run: cargo install lychee-bin
 
       - name: Проверка битых ссылок
         run: lychee "*.md" "docs/**/*.md"
