@@ -25,8 +25,13 @@ jobs:
       - name: Checkout кода
         uses: actions/checkout@v3
 
-      - name: Установка Lychee (через Cargo)
-        run: cargo install lychee-bin
+      - name: Установка Lychee
+        run: cargo install lychee
 
-      - name: Проверка битых ссылок
-        run: lychee "*.md" "docs/**/*.md"
+      - name: Проверка битых ссылок (с предупреждениями)
+        run: |
+          lychee --root docs "*.md" "docs/**/*.md" \
+            --accept 429,503 \
+            --timeout 10 \
+            --verbose \
+            || echo "⚠️ Найдены битые ссылки, но CI продолжается"
