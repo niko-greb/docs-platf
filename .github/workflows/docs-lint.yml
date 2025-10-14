@@ -1,4 +1,4 @@
-name: Проверка документации
+name: Docs-as-Code CI
 
 on:
   push:
@@ -7,47 +7,41 @@ on:
     branches: [ main ]
 
 jobs:
-  lint-asciidoc:
+  lint:
+    name: Run Docs Linters (Markdown + AsciiDoc + OpenAPI)
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Установка Asciidoctor
+      - name: Cache Docker layers
+        uses: actions/cache@v4
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build docs-cli Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          tags: docs-cli:ci
+          load: true
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new
+
+      - name: Run Docs Linters
         run: |
-          sudo apt-get update
-          sudo apt-get install -y ruby-dev
-          gem install asciidoctor
+          chmod +x scripts/*.sh
+          ./scripts/run-linters.sh
 
-      - name: Проверка .adoc файлов
+      - name: Save new Docker cache
+        if: always()
         run: |
-          find docs -name "*.adoc" -exec asciidoctor --trace -o /dev/null {} \; || (echo "Ошибка в AsciiDoc" && exit 1)
-    
-  lint-markdown:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout кода
-        uses: actions/checkout@v3
-
-      - name: Установка MarkdownLint
-        run: npm install -g markdownlint-cli
-
-      - name: Проверка Markdown
-        run: markdownlint "**/*.md" --config .markdownlint.json || exit 1
-
-  validate-links:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout кода
-        uses: actions/checkout@v3
-
-      - name: Установка Lychee
-        run: cargo install lychee
-
-      - name: Проверка битых ссылок (с предупреждениями)
-        run: |
-          lychee --root docs "*.md" "docs/**/*.md" \
-            --accept 429,503 \
-            --timeout 10 \
-            --verbose \
-            || echo "⚠️ Найдены битые ссылки, но CI продолжается"
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache || true
