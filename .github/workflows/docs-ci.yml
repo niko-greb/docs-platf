@@ -83,17 +83,21 @@ jobs:
           FAILURE_COUNT=0
 
           # ─────────────────────────────────────────────────────────
-          # Тест 1: markdownlint должен падать на invalid/order-bad.md
-          # Ожидаемые ошибки: MD003, MD007, MD047, битая ссылка
+          # Тест 1: markdownlint-cli2 должен НАЙТИ ошибки → exit code 1
           echo "📝 Тест: markdownlint-cli2 должен НАЙТИ ошибки в tests/invalid/order-bad.md"
-          if docker run --rm -v "$PWD":/work -w /work docs-cli:ci \
-            markdownlint-cli2 tests/invalid/order-bad.md --config .markdownlint-cli2.jsonc; then
-            echo "::warning title=Markdown test FAILED::❌ markdownlint ПРОШЁЛ, но ДОЛЖЕН был упасть!"
-            echo "Возможно: правила отключены или файл больше не содержит ошибок."
+          docker run --rm -v "$PWD":/work -w /work docs-cli:ci \
+            markdownlint-cli2 "tests/invalid/order-bad.md" --config .markdownlint.jsonc
+
+          EXIT_CODE=$?
+          if [ $EXIT_CODE -eq 1 ]; then
+            echo "✅ markdownlint-cli2 корректно обнаружил ошибки (ожидался код 1)"
+            ((SUCCESS_COUNT++))
+          elif [ $EXIT_CODE -eq 0 ]; then
+            echo "::warning title=Markdown test FAILED::❌ markdownlint-cli2 НЕ нашёл ошибок (код 0), но должен был!"
             ((FAILURE_COUNT++))
           else
-            echo "✅ markdownlint корректно обнаружил ошибки (MD003, MD007, MD047, битая ссылка)"
-            ((SUCCESS_COUNT++))
+            echo "::error title=Markdown execution FAILED::❌ Ошибка выполнения markdownlint-cli2 (код $EXIT_CODE)"
+            ((FAILURE_COUNT++))
           fi
 
           # ─────────────────────────────────────────────────────────
