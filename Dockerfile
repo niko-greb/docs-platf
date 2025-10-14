@@ -1,12 +1,6 @@
 FROM python:3.11-slim
 
 ENV DEBIAN_FRONTEND=noninteractive
-# Установим Ruby через RVM (чтобы не зависеть от устаревшего apt)
-RUN apt-get update && apt-get install -y --no-install-recommends curl gnupg2 ca-certificates && \
-    gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 \
-        7D2BAF1CF37B13E2069D6956105BD0E739499BDB && \
-    curl -sSL https://get.rvm.io | bash -s stable --ruby && \
-    /bin/bash -lc "rvm use ruby --default && gem install --no-document asciidoctor asciidoctor-lint"
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ruby-full nodejs npm wget jq git build-essential libxml2-dev libxslt-dev && \
