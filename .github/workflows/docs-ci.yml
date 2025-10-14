@@ -65,3 +65,30 @@ jobs:
       - name: 📊 Summarize results
         if: always()
         run: echo "✅ Documentation checks completed"
+
+      # ─────────────────────────────────────────────────────────────
+      # TESTS
+      # ───────────────────────────────────────────────────────────── 
+
+  test-valid-files:
+      runs-on: ubuntu-latest
+      container: your-dockerhub-user/docs-linter:latest
+      steps:
+        - uses: actions/checkout@v3
+        - run: markdownlint tests/valid/*.md --config .markdownlint.json
+        - run: asciidoctor --trace -o /dev/null tests/valid/*.adoc
+      #  - run: lychee --no-progress tests/valid/**/*.md tests/valid/**/*.adoc || echo "warning: links"
+        - run: spectral lint tests/valid/*.yaml
+
+  test-invalid-files-should-fail:
+      runs-on: ubuntu-latest
+      container: your-dockerhub-user/docs-linter:latest
+      continue-on-error: true
+      steps:
+        - uses: actions/checkout@v3
+        - name: Ожидаем ошибку в markdownlint
+          run: markdownlint tests/invalid/*.md && exit 1 || exit 0
+        - name: Ожидаем ошибку в asciidoctor
+          run: asciidoctor --trace -o /dev/null tests/invalid/*.adoc && exit 1 || exit 0
+        - name: Ожидаем ошибку в spectral
+          run: spectral lint tests/invalid/*.yaml && exit 1 || exit 0

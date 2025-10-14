@@ -1,0 +1,17 @@
+openapi: 3.0.3
+info:
+  title: POS API
+  version: 1.0.0
+paths:
+  /order/{guid}:
+    post:
+      summary: Create order
+      parameters:
+        - name: guid
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '201':
+          description: Created

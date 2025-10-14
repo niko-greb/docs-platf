@@ -1,0 +1,105 @@
+openapi: 3.0.3
+info:
+  title: Mobile POS API
+  description: API для мобильной кассы в ресторанах
+  version: 1.0.0
+  contact:
+    name: IT Support
+    email: it@restaurant.local
+
+servers:
+  - url: http://pos.bk.local
+
+paths:
+  /pos/order/{guid}:
+    post:
+      summary: Создать заказ
+      operationId: createOrder
+      parameters:
+        - name: guid
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: UUID заказа
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Order'
+
+      responses:
+        '201':
+          description: Заказ создан
+          headers:
+            Location:
+              schema:
+                type: string
+              description: URL нового заказа
+        '400':
+          description: Некорректные данные
+        '409':
+          description: Заказ с таким GUID уже существует
+
+components:
+  schemas:
+    Order:
+      type: object
+      required:
+        - guid
+        - restaurant
+        - source
+        - type
+        - components
+      properties:
+        id_local:
+          type: integer
+          description: Локальный ID на устройстве
+        guid:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор заказа
+        restaurant:
+          type: integer
+          example: 9999
+        source:
+          type: string
+          enum: [cash, online, kiosk]
+        type:
+          type: string
+          enum: [stay, pickup, delivery]
+        components:
+          type: array
+          items:
+            $ref: '#/components/schemas/Component'
+        paid:
+          type: boolean
+          default: false
+
+    Component:
+      type: object
+      required:
+        - dish_id
+        - count
+        - price
+      properties:
+        dish_id:
+          type: integer
+        count:
+          type: integer
+          minimum: 1
+        price:
+          type: integer
+          description: Цена в копейках
+        modificators:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              name:
+                type: string
