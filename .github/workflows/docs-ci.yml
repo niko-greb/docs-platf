@@ -69,7 +69,7 @@ jobs:
         run: |
           docker run --rm -v "$PWD":/work -w /work docs-cli:ci \
             bash -c "
-              markdownlint tests/valid/*.md --config .markdownlint.json &&
+              markdownlint-cli2 tests/valid/*.md --config .markdownlint.json &&
               find tests/valid -name '*.adoc' -exec asciidoctor --trace -o /dev/null {} \; &&
               spectral lint tests/valid/*.yaml
             "
@@ -85,9 +85,9 @@ jobs:
           # ─────────────────────────────────────────────────────────
           # Тест 1: markdownlint должен падать на invalid/order-bad.md
           # Ожидаемые ошибки: MD003, MD007, MD047, битая ссылка
-          echo "📝 Тест: markdownlint должен НАЙТИ ошибки в tests/invalid/order-bad.md"
+          echo "📝 Тест: markdownlint-cli2 должен НАЙТИ ошибки в tests/invalid/order-bad.md"
           if docker run --rm -v "$PWD":/work -w /work docs-cli:ci \
-            markdownlint tests/invalid/order-bad.md --config .markdownlint.json; then
+            markdownlint-cli2 tests/invalid/order-bad.md --config .markdownlint.json; then
             echo "::warning title=Markdown test FAILED::❌ markdownlint ПРОШЁЛ, но ДОЛЖЕН был упасть!"
             echo "Возможно: правила отключены или файл больше не содержит ошибок."
             ((FAILURE_COUNT++))
