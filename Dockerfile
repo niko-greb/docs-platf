@@ -10,7 +10,7 @@ RUN npm install -g markdownlint-cli2 @stoplight/spectral-cli
 RUN python3 -m pip install --upgrade pip setuptools wheel && pip install --no-cache-dir mdformat
 
 # ✅ Ruby tools: AsciiDoctor и asciidoctor-lint с GitHub
-RUN gem install --no-document asciidoctor rubocop
+RUN gem install --no-document asciidoctor rubocop asciidoctor-doctest
 
 # Vale
 RUN wget -q https://github.com/errata-ai/vale/releases/download/v2.22.0/vale_2.22.0_Linux_64-bit.tar.gz -O /tmp/vale.tar.gz \
