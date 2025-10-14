@@ -74,42 +74,42 @@ jobs:
               spectral lint tests/valid/*.yaml
             "
 
-            - name: 🧪 Test invalid files (expect lint errors)
-            continue-on-error: true
-            run: |
-              echo "::group::🔍 Запуск тестов на ошибочных файлах"
-              
-              # Проверяем, что markdownlint ругается
-              echo "📝 Тест: markdownlint должен найти ошибки"
-              if docker run --rm -v "$PWD":/work -w /work docs-cli:ci \
-                markdownlint tests/invalid/*.md --config .markdownlint.json; then
-                echo "::warning title=Markdown test failed::Ожидалась ошибка в markdownlint, но он ПРОШЁЛ → возможно, тест сломан"
-              else
-                echo "✅ markdownlint корректно обнаружил ошибки"
-              fi
-    
-              # Проверяем, что asciidoctor ругается
-              echo "🔤 Тест: asciidoctor должен найти синтаксические ошибки"
-              if docker run --rm -v "$PWD":/work -w /work docs-cli:ci \
-                find tests/invalid -name '*.adoc' -exec asciidoctor --trace -o /dev/null {} \;; then
-                echo "::warning title=AsciiDoc test failed::Ожидалась ошибка в asciidoctor, но он ПРОШЁЛ → возможно, тест сломан"
-              else
-                echo "✅ asciidoctor корректно обнаружил ошибки"
-              fi
-    
-              # Проверяем, что spectral ругается
-              echo "🔍 Тест: spectral должен найти ошибки в OpenAPI"
-              if docker run --rm -v "$PWD":/work -w /work docs-cli:ci \
-                spectral lint tests/invalid/*.yaml; then
-                echo "::warning title=OpenAPI test failed::Ожидалась ошибка в spectral, но он ПРОШЁЛ → возможно, тест сломан"
-              else
-                echo "✅ spectral корректно обнаружил ошибки"
-              fi
-    
-              echo "::endgroup::"
-    
-              # Важно: завершаем шаг успешно, даже если были ошибки
-              exit 0
+      - name: 🧪 Test invalid files (expect lint errors)
+        continue-on-error: true
+        run: |
+          echo "::group::🔍 Запуск тестов на ошибочных файлах"
+          
+          # Проверяем, что markdownlint ругается
+          echo "📝 Тест: markdownlint должен найти ошибки"
+          if docker run --rm -v "$PWD":/work -w /work docs-cli:ci \
+            markdownlint tests/invalid/*.md --config .markdownlint.json; then
+            echo "::warning title=Markdown test failed::Ожидалась ошибка в markdownlint, но он ПРОШЁЛ → возможно, тест сломан"
+          else
+            echo "✅ markdownlint корректно обнаружил ошибки"
+          fi
+
+          # Проверяем, что asciidoctor ругается
+          echo "🔤 Тест: asciidoctor должен найти синтаксические ошибки"
+          if docker run --rm -v "$PWD":/work -w /work docs-cli:ci \
+            find tests/invalid -name '*.adoc' -exec asciidoctor --trace -o /dev/null {} \;; then
+            echo "::warning title=AsciiDoc test failed::Ожидалась ошибка в asciidoctor, но он ПРОШЁЛ → возможно, тест сломан"
+          else
+            echo "✅ asciidoctor корректно обнаружил ошибки"
+          fi
+
+          # Проверяем, что spectral ругается
+          echo "🔍 Тест: spectral должен найти ошибки в OpenAPI"
+          if docker run --rm -v "$PWD":/work -w /work docs-cli:ci \
+            spectral lint tests/invalid/*.yaml; then
+            echo "::warning title=OpenAPI test failed::Ожидалась ошибка в spectral, но он ПРОШЁЛ → возможно, тест сломан"
+          else
+            echo "✅ spectral корректно обнаружил ошибки"
+          fi
+
+          echo "::endgroup::"
+
+          # Важно: завершаем шаг успешно, даже если были ошибки
+          exit 0
 
       # ─────────────────────────────────────────────────────────────
       # REPORTING
