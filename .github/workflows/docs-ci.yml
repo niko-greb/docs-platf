@@ -87,7 +87,7 @@ jobs:
           # Ожидаемые ошибки: MD003, MD007, MD047, битая ссылка
           echo "📝 Тест: markdownlint-cli2 должен НАЙТИ ошибки в tests/invalid/order-bad.md"
           if docker run --rm -v "$PWD":/work -w /work docs-cli:ci \
-            markdownlint-cli2 tests/invalid/order-bad.md --config ..markdownlint-cli2.jsonc; then
+            markdownlint-cli2 tests/invalid/order-bad.md --config .markdownlint-cli2.jsonc; then
             echo "::warning title=Markdown test FAILED::❌ markdownlint ПРОШЁЛ, но ДОЛЖЕН был упасть!"
             echo "Возможно: правила отключены или файл больше не содержит ошибок."
             ((FAILURE_COUNT++))
