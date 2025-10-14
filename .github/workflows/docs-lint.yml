@@ -29,8 +29,8 @@ jobs:
       - name: Build docs-cli Docker image
         uses: docker/build-push-action@v6
         with:
-          context: .
-          file: ./Dockerfile
+          context: ${{ github.workspace }}
+          file: ${{ github.workspace }}/Dockerfile
           tags: docs-cli:ci
           load: true
           cache-from: type=local,src=/tmp/.buildx-cache
