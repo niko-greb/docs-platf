@@ -74,71 +74,71 @@ jobs:
               spectral lint tests/valid/*.yaml
             "
 
-            - name: 🧪 Test invalid files (expect lint errors)
-            continue-on-error: true
-            run: |
-              echo "::group::🔍 Запуск тестов на некорректных файлах"
-    
-              SUCCESS_COUNT=0
-              FAILURE_COUNT=0
-    
-              # ─────────────────────────────────────────────────────────
-              # Тест 1: markdownlint должен падать на invalid/order-bad.md
-              # Ожидаемые ошибки: MD003, MD007, MD047, битая ссылка
-              echo "📝 Тест: markdownlint должен НАЙТИ ошибки в tests/invalid/order-bad.md"
-              if docker run --rm -v "$PWD":/work -w /work docs-cli:ci \
-                markdownlint tests/invalid/order-bad.md --config .markdownlint.json; then
-                echo "::warning title=Markdown test FAILED::❌ markdownlint ПРОШЁЛ, но ДОЛЖЕН был упасть!"
-                echo "Возможно: правила отключены или файл больше не содержит ошибок."
-                ((FAILURE_COUNT++))
-              else
-                echo "✅ markdownlint корректно обнаружил ошибки (MD003, MD007, MD047, битая ссылка)"
-                ((SUCCESS_COUNT++))
-              fi
-    
-              # ─────────────────────────────────────────────────────────
-              # Тест 2: asciidoctor должен падать на invalid/api-bad.adoc
-              # Ожидаем: синтаксис заголовка, include, таблица
-              echo "🔤 Тест: asciidoctor должен НАЙТИ ошибки в tests/invalid/api-bad.adoc"
-              if docker run --rm -v "$PWD":/work -w /work docs-cli:ci \
-                asciidoctor --trace -o /dev/null tests/invalid/api-bad.adoc; then
-                echo "::warning title=AsciiDoc test FAILED::❌ asciidoctor ПРОШЁЛ, но ДОЛЖЕН был упасть!"
-                echo "Возможно: файл стал валидным или проверка сломана."
-                ((FAILURE_COUNT++))
-              else
-                echo "✅ asciidoctor корректно обнаружил синтаксические ошибки"
-                echo "→ Нарушения: заголовок без пробела, невалидная таблица, include::not-found.adoc[]"
-                ((SUCCESS_COUNT++))
-              fi
-    
-              # ─────────────────────────────────────────────────────────
-              # Тест 3: spectral должен падать на invalid/openapi-bad.yaml
-              # Ожидаем: YAML-отступ, код ответа без кавычек, GET с телом
-              echo "🔍 Тест: spectral должен НАЙТИ ошибки в tests/invalid/openapi-bad.yaml"
-              if docker run --rm -v "$PWD":/work -w /work docs-cli:ci \
-                spectral lint tests/invalid/openapi-bad.yaml; then
-                echo "::warning title=OpenAPI test FAILED::❌ spectral ПРОШЁЛ, но ДОЛЖЕН был упасть!"
-                echo "Возможно: правила изменены или файл исправлен."
-                ((FAILURE_COUNT++))
-              else
-                echo "✅ spectral корректно обнаружил ошибки в OpenAPI"
-                echo "→ Проблемы: неправильный отступ в 'title', код 201 вместо '201', GET с requestBody"
-                ((SUCCESS_COUNT++))
-              fi
-    
-              # ─────────────────────────────────────────────────────────
-              # ИТОГ
-              echo "✅ Успешных тестов (ожидаемые ошибки найдены): $SUCCESS_COUNT"
-              if [ $FAILURE_COUNT -gt 0 ]; then
-                echo "::warning title=Health Check Warning::$FAILURE_COUNT тест(а/ов) провалились: линтеры НЕ заметили ошибки!"
-              else
-                echo "🟢 Все тесты прошли успешно: система контроля качества работает корректно"
-              fi
-    
-              echo "::endgroup::"
-    
-              # Завершаем успешно, даже если были предупреждения
-              exit 0
+      - name: 🧪 Test invalid files (expect lint errors)
+        continue-on-error: true
+        run: |
+          echo "::group::🔍 Запуск тестов на некорректных файлах"
+
+          SUCCESS_COUNT=0
+          FAILURE_COUNT=0
+
+          # ─────────────────────────────────────────────────────────
+          # Тест 1: markdownlint должен падать на invalid/order-bad.md
+          # Ожидаемые ошибки: MD003, MD007, MD047, битая ссылка
+          echo "📝 Тест: markdownlint должен НАЙТИ ошибки в tests/invalid/order-bad.md"
+          if docker run --rm -v "$PWD":/work -w /work docs-cli:ci \
+            markdownlint tests/invalid/order-bad.md --config .markdownlint.json; then
+            echo "::warning title=Markdown test FAILED::❌ markdownlint ПРОШЁЛ, но ДОЛЖЕН был упасть!"
+            echo "Возможно: правила отключены или файл больше не содержит ошибок."
+            ((FAILURE_COUNT++))
+          else
+            echo "✅ markdownlint корректно обнаружил ошибки (MD003, MD007, MD047, битая ссылка)"
+            ((SUCCESS_COUNT++))
+          fi
+
+          # ─────────────────────────────────────────────────────────
+          # Тест 2: asciidoctor должен падать на invalid/api-bad.adoc
+          # Ожидаем: синтаксис заголовка, include, таблица
+          echo "🔤 Тест: asciidoctor должен НАЙТИ ошибки в tests/invalid/api-bad.adoc"
+          if docker run --rm -v "$PWD":/work -w /work docs-cli:ci \
+            asciidoctor --trace -o /dev/null tests/invalid/api-bad.adoc; then
+            echo "::warning title=AsciiDoc test FAILED::❌ asciidoctor ПРОШЁЛ, но ДОЛЖЕН был упасть!"
+            echo "Возможно: файл стал валидным или проверка сломана."
+            ((FAILURE_COUNT++))
+          else
+            echo "✅ asciidoctor корректно обнаружил синтаксические ошибки"
+            echo "→ Нарушения: заголовок без пробела, невалидная таблица, include::not-found.adoc[]"
+            ((SUCCESS_COUNT++))
+          fi
+
+          # ─────────────────────────────────────────────────────────
+          # Тест 3: spectral должен падать на invalid/openapi-bad.yaml
+          # Ожидаем: YAML-отступ, код ответа без кавычек, GET с телом
+          echo "🔍 Тест: spectral должен НАЙТИ ошибки в tests/invalid/openapi-bad.yaml"
+          if docker run --rm -v "$PWD":/work -w /work docs-cli:ci \
+            spectral lint tests/invalid/openapi-bad.yaml; then
+            echo "::warning title=OpenAPI test FAILED::❌ spectral ПРОШЁЛ, но ДОЛЖЕН был упасть!"
+            echo "Возможно: правила изменены или файл исправлен."
+            ((FAILURE_COUNT++))
+          else
+            echo "✅ spectral корректно обнаружил ошибки в OpenAPI"
+            echo "→ Проблемы: неправильный отступ в 'title', код 201 вместо '201', GET с requestBody"
+            ((SUCCESS_COUNT++))
+          fi
+
+          # ─────────────────────────────────────────────────────────
+          # ИТОГ
+          echo "✅ Успешных тестов (ожидаемые ошибки найдены): $SUCCESS_COUNT"
+          if [ $FAILURE_COUNT -gt 0 ]; then
+            echo "::warning title=Health Check Warning::$FAILURE_COUNT тест(а/ов) провалились: линтеры НЕ заметили ошибки!"
+          else
+            echo "🟢 Все тесты прошли успешно: система контроля качества работает корректно"
+          fi
+
+          echo "::endgroup::"
+
+          # Завершаем успешно, даже если были предупреждения
+          exit 0
 
       # ─────────────────────────────────────────────────────────────
       # REPORTING
