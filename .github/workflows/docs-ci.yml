@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ main ]
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   docs-validate:
     name: 🧩 Validate Documentation
@@ -37,12 +41,14 @@ jobs:
       - name: 🧾 Run Markdown Linter (non-blocking)
         run: |
           echo "🧾 Running Markdown Linter..."
+          # Выполняем линтинг внутри контейнера и выносим stdout наружу
           docker run --rm -v "$PWD":/work -w /work docs-cli:ci \
             bash -c "markdownlint-cli2 '**/*.md' '#node_modules' --format markdown" \
-            | tee "${{ github.workspace }}/docs-quality.log" || true
+            | tee docs-quality.log
           
           echo "📋 Lint Summary:"
-          cat "${{ github.workspace }}/docs-quality.log" || echo "⚠️ No lint output generated"
+          cat docs-quality.log || echo "⚠️ No lint output generated"
+
 
 
 
