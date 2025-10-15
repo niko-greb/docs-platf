@@ -1,4 +1,4 @@
-name: 🧩 Docs-as-Code CI (soft checks)
+name: 🧱 Docs-as-Code CI (Soft Mode)
 
 on:
   push:
@@ -7,12 +7,15 @@ on:
     branches: [ main ]
 
 jobs:
-  lint-docs:
-    name: 📚 Validate Documentation
+  docs-validate:
+    name: 🧩 Validate Documentation
     runs-on: ubuntu-latest
-    continue-on-error: true  # ✅ Основное — не падаем при ошибках
+    continue-on-error: true  # CI не падает при ошибках
 
     steps:
+      # ─────────────────────────────────────────────
+      # 1️⃣ Checkout & Docker Build
+      # ─────────────────────────────────────────────
       - name: 🧭 Checkout repository
         uses: actions/checkout@v4
 
@@ -28,64 +31,97 @@ jobs:
           load: true
           tags: docs-cli:ci
 
-      # ──────────────────────────────────────────────
-      # MARKDOWN VALIDATION
-      # ──────────────────────────────────────────────
+      # ─────────────────────────────────────────────
+      # 2️⃣ Markdown Validation
+      # ─────────────────────────────────────────────
       - name: 🧾 Lint Markdown files
         continue-on-error: true
         run: |
           echo "🧾 Running Markdown Linter..."
-          docker run --rm -v "$PWD":/work -w /work docs-cli:ci \
-            bash -c "echo '📂 Files visible to container:' && ls -R docs || true"
-          docker run --rm -v "$PWD":/work -w /work docs-cli:ci \
-            bash -c "markdownlint-cli2 '**/*.md' '#node_modules' --format markdown | tee -a docs-quality.log || true"
+          docker run --rm -v "$PWD":/work -w /work docs-cli:ci bash -lc '
+            echo "📂 Current dir:" && pwd
+            echo "📄 Checking for Markdown files..."
+            FILES=$(find . -type f -name "*.md" | wc -l)
+            if [ "$FILES" -eq 0 ]; then
+              echo "⚠️ No Markdown files found — skipping"
+              exit 0
+            fi
+            echo "🧾 Found $FILES Markdown files. Running markdownlint..."
+            markdownlint-cli2 "**/*.md" "#node_modules" --format markdown | tee -a docs-quality.log || true
+          '
 
-
-
-      # ──────────────────────────────────────────────
-      # ASCIIDOC VALIDATION
-      # ──────────────────────────────────────────────
-      - name: 🏗️ Validate AsciiDoc with Asciidoctor Doctest
+      # ─────────────────────────────────────────────
+      # 3️⃣ AsciiDoc Validation
+      # ─────────────────────────────────────────────
+      - name: 🏗️ Validate AsciiDoc files
         continue-on-error: true
         run: |
-          echo "🏗️ Running AsciiDoc Doctest..."
-          docker run --rm -v "$PWD":/work -w /work docs-cli:ci \
-            bash -c "find . -name '*.adoc' -type f -print0 | xargs -0 -n1 asciidoctor-doctest || true"
+          echo "🏗️ Running AsciiDoctor Doctest..."
+          docker run --rm -v "$PWD":/work -w /work docs-cli:ci bash -lc '
+            echo "📄 Checking for AsciiDoc files..."
+            FILES=$(find . -type f -name "*.adoc" | wc -l)
+            if [ "$FILES" -eq 0 ]; then
+              echo "⚠️ No AsciiDoc files found — skipping"
+              exit 0
+            fi
+            echo "🧱 Found $FILES AsciiDoc files. Running doctest..."
+            find . -type f -name "*.adoc" -print0 | xargs -0 -n1 asciidoctor-doctest 2>&1 | tee -a docs-quality.log || true
+          '
 
-      # ──────────────────────────────────────────────
-      # OPENAPI VALIDATION
-      # ──────────────────────────────────────────────
+      # ─────────────────────────────────────────────
+      # 4️⃣ OpenAPI Validation
+      # ─────────────────────────────────────────────
       - name: 🔍 Validate OpenAPI specs
         continue-on-error: true
         run: |
-          echo "🔍 Running Spectral validation..."
-          docker run --rm -v "$PWD":/work -w /work docs-cli:ci \
-            bash -c "find . -name '*.yaml' -o -name '*.yml' | grep -i openapi || true | xargs -r -n1 spectral lint || true"
+          echo "🔍 Running Spectral OpenAPI checks..."
+          docker run --rm -v "$PWD":/work -w /work docs-cli:ci bash -lc '
+            echo "📄 Checking for YAML/YML OpenAPI specs..."
+            FILES=$(find . -type f \( -name "*.yaml" -o -name "*.yml" \) | wc -l)
+            if [ "$FILES" -eq 0 ]; then
+              echo "⚠️ No YAML files found — skipping"
+              exit 0
+            fi
+            echo "📜 Found $FILES YAML files. Running Spectral..."
+            find . -type f \( -name "*.yaml" -o -name "*.yml" \) -print0 | xargs -0 -n1 spectral lint --quiet 2>&1 | tee -a docs-quality.log || true
+          '
 
-      # ──────────────────────────────────────────────
-      # STYLE CHECK
-      # ──────────────────────────────────────────────
-      - name: ✍️ Run Vale Style Check
+      # ─────────────────────────────────────────────
+      # 5️⃣ Style (Vale)
+      # ─────────────────────────────────────────────
+      - name: ✍️ Run Vale style checks
         continue-on-error: true
         run: |
-          echo "✍️ Running Vale style check..."
-          docker run --rm -v "$PWD":/work -w /work docs-cli:ci \
-            bash -c "vale --output=line --minAlertLevel=warning . || true"
+          echo "✍️ Running Vale Style Checker..."
+          docker run --rm -v "$PWD":/work -w /work docs-cli:ci bash -lc '
+            echo "📄 Checking for text files..."
+            FILES=$(find . -type f \( -name "*.md" -o -name "*.adoc" \) | wc -l)
+            if [ "$FILES" -eq 0 ]; then
+              echo "⚠️ No documentation files found — skipping"
+              exit 0
+            fi
+            echo "✍️ Running Vale on $FILES files..."
+            vale --output=line --minAlertLevel=warning . 2>&1 | tee -a docs-quality.log || true
+          '
 
-      # ──────────────────────────────────────────────
-      # REPORTING (COLLECT ALL RESULTS)
-      # ──────────────────────────────────────────────
-      - name: 📊 Summarize Results
+      # ─────────────────────────────────────────────
+      # 6️⃣ Reporting
+      # ─────────────────────────────────────────────
+      - name: 📊 Summarize results
         if: always()
         run: |
-          echo "✅ Documentation soft check completed!"
           echo ""
-          echo "🧾 Markdown, 🏗️ AsciiDoc, 🔍 OpenAPI, ✍️ Vale — executed in soft mode"
-          echo "⚠️ Please review warnings manually in the job logs"
-        
-      # ──────────────────────────────────────────────
-      # REPORTING (COLLECT ALL RESULTS)
-      # ──────────────────────────────────────────────
+          echo "✅ All linters executed (soft mode)."
+          echo "Check docs-quality.log artifact for warnings and style notes."
+
+      - name: 📦 Upload docs quality report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs-quality-report
+          path: docs-quality.log
+          if-no-files-found: warn
+
       - name: 💬 Comment in Pull Request
         if: github.event_name == 'pull_request'
         uses: marocchino/sticky-pull-request-comment@v2
@@ -94,13 +130,4 @@ jobs:
           message: |
             🧩 **Docs-as-Code Check Complete**
             ✅ All checks executed in soft mode.
-            ⚠️ Please review the logs in **Actions → Docs-as-Code CI** for warnings.
-
-      - name: 📦 Upload docs quality report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: docs-quality-report
-          path: docs-quality.log
-      
-                                                                   
+            ⚠️ Please review warnings in **Actions → Docs-as-Code CI** or download the artifact `docs-quality-report`.

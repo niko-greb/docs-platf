@@ -1,0 +1,10 @@
+{
+  "globs": ["**/*.md", "#node_modules", "#.git"],
+  "config": {
+    "MD013": false, // Ignore long lines
+    "MD041": false, // Ignore first header rule
+    "MD033": true,  // Allow inline HTML
+    "MD004": "consistent"
+  }
+}
+  
