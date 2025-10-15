@@ -36,7 +36,10 @@ jobs:
         run: |
           echo "🧾 Running Markdown Linter..."
           docker run --rm -v "$PWD":/work -w /work docs-cli:ci \
+            bash -c "echo '📂 Files visible to container:' && ls -R docs || true"
+          docker run --rm -v "$PWD":/work -w /work docs-cli:ci \
             bash -c "markdownlint-cli2 '**/*.md' '#node_modules' --format markdown | tee -a docs-quality.log || true"
+
 
 
       # ──────────────────────────────────────────────
