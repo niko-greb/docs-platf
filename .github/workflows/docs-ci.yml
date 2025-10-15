@@ -34,21 +34,22 @@ jobs:
       # ─────────────────────────────────────────────
       # 2️⃣ Markdown Validation
       # ─────────────────────────────────────────────
-      - name: 🧾 Lint Markdown files
-        continue-on-error: true
+      - name: 🧾 Run Markdown Linter (non-blocking)
         run: |
           echo "🧾 Running Markdown Linter..."
-          docker run --rm -v "$PWD":/work -w /work docs-cli:ci bash -lc '
-            echo "📂 Current dir:" && pwd
-            echo "📄 Checking for Markdown files..."
-            FILES=$(find . -type f -name "*.md" | wc -l)
-            if [ "$FILES" -eq 0 ]; then
-              echo "⚠️ No Markdown files found — skipping"
-              exit 0
-            fi
-            echo "🧾 Found $FILES Markdown files. Running markdownlint..."
-            markdownlint-cli2 "**/*.md" "#node_modules" --format markdown | tee -a docs-quality.log || true
-          '
+          docker run --rm -v "$PWD":/work -w /work docs-cli:ci \
+            bash -c "markdownlint-cli2 '**/*.md' '#node_modules' --format markdown | tee /work/docs-quality.log || true"
+          
+          echo "📋 Lint Summary:"
+          cat docs-quality.log || echo "No lint output generated"
+          
+      - name: 📎 Upload Linter Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs-quality-report
+          path: docs-quality.log
+
 
       # ─────────────────────────────────────────────
       # 3️⃣ AsciiDoc Validation
