@@ -1,0 +1,7 @@
+extends: "spectral:oas"
+rules:
+  info-contact: off
+  info-description: warn
+  info-license: off
+  no-$ref-siblings: error
+  operation-description: warn

@@ -1,0 +1,10 @@
+= Architecture Overview
+
+:toc:
+:doctype: book
+
+This is a sample AsciiDoc document.
+
+== Integration Flow
+
+include::missing_file.adoc[]
