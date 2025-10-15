@@ -110,20 +110,20 @@ jobs:
           echo "✅ All linters executed (soft mode)."
           echo "Check docs-quality.log artifact for warnings and style notes."
 
-      - name: 📦 Upload docs quality report
+      - name: 📎 Upload Linter Report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: docs-quality-report
           path: docs-quality.log
-          if-no-files-found: warn
 
-      - name: 💬 Comment in Pull Request
-        if: github.event_name == 'pull_request'
+      - name: 💬 Comment Markdown Issues in PR
+        if: always() && github.event_name == 'pull_request'
         uses: marocchino/sticky-pull-request-comment@v2
         with:
-          header: docs-quality
+          header: markdownlint
           message: |
-            🧩 **Docs-as-Code Check Complete**
-            ✅ All checks executed in soft mode.
-            ⚠️ Please review warnings in **Actions → Docs-as-Code CI** or download the artifact `docs-quality-report`.
+            🧾 **Markdownlint Report**
+            ```
+            $(cat docs-quality.log)
+            ```
