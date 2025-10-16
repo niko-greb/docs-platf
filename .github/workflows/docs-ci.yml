@@ -38,10 +38,10 @@ jobs:
       # ───────────────────────────────
       # 2️⃣ Markdownlint
       # ───────────────────────────────
-      - name: 🧾 Run Markdown Linter (debug mode)
+      - name: 🧾 Run Markdown Linter (via npx)
         run: |
           mkdir -p artifacts
-          echo "🧾 Running Markdown Linter (debug mode)..."
+          echo "🧾 Running Markdown Linter..."
 
           docker run --rm \
             -v "${{ github.workspace }}/docs":/docs \
@@ -50,13 +50,13 @@ jobs:
               cd /docs
               echo "📂 Working dir: $(pwd)"
               echo "📄 Files in /docs:"
-              find . -type f -maxdepth 2
+              find . -type f -name "*.md" -maxdepth 2
               echo ""
-              echo "🔎 Checking markdownlint-cli2 version:"
-              markdownlint-cli2 --version || echo "⚠️ markdownlint-cli2 not found"
+              echo "🔎 Checking markdownlint-cli2..."
+              npx markdownlint-cli2 --version || echo "⚠️ markdownlint-cli2 not found"
               echo ""
               echo "🚀 Running markdownlint..."
-              markdownlint-cli2 "**/*.md" "#node_modules" --format markdown
+              npx markdownlint-cli2 "**/*.md" "#node_modules" --format markdown
               CODE=$?
               echo "🔚 Exit code: $CODE"
               exit 0
@@ -64,6 +64,7 @@ jobs:
 
           echo "📋 Markdownlint results:"
           cat artifacts/markdownlint.log || echo "⚠️ No lint output generated"
+
 
 
 
