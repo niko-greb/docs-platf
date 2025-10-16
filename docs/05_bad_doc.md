@@ -6,7 +6,5 @@ This line is waaaaay toooooooooooooooooooooooooooooooooooooooooooooooooooooooooo
 - inconsistent list
 * next item
 
-[Следующий шаг]https://asciidoctor.org/)
-
 <div>Inline HTML here</div>
-no line BELOw
+dfdfdfddf
