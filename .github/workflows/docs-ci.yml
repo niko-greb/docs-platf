@@ -38,27 +38,29 @@ jobs:
       # ───────────────────────────────
       # 2️⃣ Markdownlint
       # ───────────────────────────────
-      - name: 🧾 Run Markdown Linter
+      - name: 🧾 Run Markdown Linter (debug mode)
         run: |
           mkdir -p artifacts
-          echo "🧾 Running Markdown Linter..."
+          echo "🧾 Running Markdown Linter (debug mode)..."
 
-          # Выполним линтинг, весь stdout дублируем в файл артефакта
           docker run --rm \
             -v "${{ github.workspace }}/docs":/docs \
             docs-cli:ci bash -lc '
-              set -e
+              set +e
               cd /docs
               echo "📂 Working dir: $(pwd)"
-              FILES=$(find . -type f -name "*.md" | wc -l)
-              if [ "$FILES" -eq 0 ]; then
-                echo "⚠️ No Markdown files found"
-                exit 0
-              fi
-              echo "📂 Found $FILES Markdown files"
-              markdownlint-cli2 "**/*.md" "#node_modules" --format markdown || true
-              echo "✅ Markdown lint finished"
-            ' | tee artifacts/markdownlint.log
+              echo "📄 Files in /docs:"
+              find . -type f -maxdepth 2
+              echo ""
+              echo "🔎 Checking markdownlint-cli2 version:"
+              markdownlint-cli2 --version || echo "⚠️ markdownlint-cli2 not found"
+              echo ""
+              echo "🚀 Running markdownlint..."
+              markdownlint-cli2 "**/*.md" "#node_modules" --format markdown
+              CODE=$?
+              echo "🔚 Exit code: $CODE"
+              exit 0
+            ' 2>&1 | tee artifacts/markdownlint.log
 
           echo "📋 Markdownlint results:"
           cat artifacts/markdownlint.log || echo "⚠️ No lint output generated"
