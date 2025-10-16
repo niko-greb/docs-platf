@@ -43,10 +43,13 @@ jobs:
           mkdir -p artifacts
           echo "🧾 Running Markdown Linter..."
           docker run --rm \
-            -v "$PWD/docs":/docs \
-            -v "$PWD/artifacts":/out \
+            -v "${{ github.workspace }}/docs":/docs \
+            -v "${{ github.workspace }}/artifacts":/out \
             docs-cli:ci bash -lc '
+              set -e
               cd /docs
+              echo "📂 Working dir: $(pwd)"
+              ls -la || true
               FILES=$(find . -type f -name "*.md" | wc -l)
               if [ "$FILES" -eq 0 ]; then
                 echo "⚠️ No Markdown files found" | tee /out/markdownlint.log
@@ -54,10 +57,12 @@ jobs:
               fi
               echo "📂 Found $FILES Markdown files"
               markdownlint-cli2 "**/*.md" "#node_modules" --format markdown | tee /out/markdownlint.log || true
+              echo "✅ Markdown lint finished"
             '
 
           echo "📋 Markdownlint results:"
           cat artifacts/markdownlint.log || echo "⚠️ No lint output generated"
+
 
 
       # ───────────────────────────────
