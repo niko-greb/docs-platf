@@ -5,9 +5,7 @@ OUT_DIR="$ROOT/artifacts"
 mkdir -p "$OUT_DIR"
 
 echo "🎨 Checking Markdown formatting with mdformat..."
-docker run --rm -v "$ROOT":/work -w /work docs-cli:local bash -lc '
-  set +e
-  mdformat --check .
-' | tee "$OUT_DIR/mdformat.log"
+mdformat --check . \
+  | tee "$OUT_DIR/mdformat.log"
 
 echo "📋 mdformat results saved to artifacts/mdformat.log"
