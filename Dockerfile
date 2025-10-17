@@ -7,7 +7,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     rm -rf /var/lib/apt/lists/*
  
 RUN npm install markdownlint-cli2 markdownlint --save-dev    
-
 RUN npm install -g @stoplight/spectral-cli
 RUN python3 -m pip install --upgrade pip setuptools wheel && pip install --no-cache-dir mdformat
 
