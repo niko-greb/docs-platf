@@ -1,4 +1,4 @@
-name: 🧱 Docs-as-Code CI (Soft Mode)
+name: 🧱 Docs-as-Code CI
 
 on:
   push:
@@ -17,9 +17,9 @@ jobs:
     continue-on-error: true
 
     steps:
-      # ───────────────────────────────
-      # 1️⃣ Checkout & Docker Build
-      # ───────────────────────────────
+      # ───────────────────────────────────────────────
+      # 1️⃣ Checkout & Build Docker Image
+      # ───────────────────────────────────────────────
       - name: 🧭 Checkout repository
         uses: actions/checkout@v4
 
@@ -35,92 +35,69 @@ jobs:
           load: true
           tags: docs-cli:ci
 
-      # ───────────────────────────────
+      # ───────────────────────────────────────────────
       # 2️⃣ Markdownlint
-      # ───────────────────────────────
-      - name: 🧾 Run Markdown Linter (via npx)
+      # ───────────────────────────────────────────────
+      - name: 🧾 Run Markdown Linter
         run: |
           mkdir -p artifacts
-          echo "🧾 Running Markdown Linter..."
-
           docker run --rm \
             -v "${{ github.workspace }}/docs":/docs \
             docs-cli:ci bash -lc '
-              set +e
               cd /docs
-              echo "📂 Working dir: $(pwd)"
-              echo "📄 Files in /docs:"
-              find . -type f -name "*.md" -maxdepth 2
-              echo ""
-              echo "🔎 Checking markdownlint-cli2..."
-              npx markdownlint-cli2 --version || echo "⚠️ markdownlint-cli2 not found"
-              echo ""
-              echo "🚀 Running markdownlint..."
-              npx markdownlint-cli2 "**/*.md" "#node_modules" --format markdown
-              CODE=$?
-              echo "🔚 Exit code: $CODE"
-              exit 0
-            ' 2>&1 | tee artifacts/markdownlint.log
+              echo "📂 Checking Markdown files in $(pwd)"
+              markdownlint-cli2 "**/*.md" "#node_modules" --format markdown || true
+            ' | tee artifacts/markdownlint.log
 
-          echo "📋 Markdownlint results:"
-          cat artifacts/markdownlint.log || echo "⚠️ No lint output generated"
-
-
-
-
-
-      # ───────────────────────────────
+      # ───────────────────────────────────────────────
       # 3️⃣ Asciidoctor
-      # ───────────────────────────────
-      - name: 🏗️ Validate AsciiDoc files
+      # ───────────────────────────────────────────────
+      - name: 🏗️ Validate AsciiDoc
         run: |
-          echo "🏗️ Running Asciidoctor Doctest..."
-          docker run --rm -v "$PWD":/work -w /work docs-cli:ci bash -lc '
-            FILES=$(find . -type f -name "*.adoc" | wc -l)
-            if [ "$FILES" -eq 0 ]; then
-              echo "⚠️ No AsciiDoc files found — skipping"
-              exit 0
-            fi
-            find . -type f -name "*.adoc" -print0 | xargs -0 -n1 asciidoctor-doctest 2>&1 || true
-          ' | tee -a artifacts/asciidoc.log
+          docker run --rm \
+            -v "${{ github.workspace }}/docs":/docs \
+            docs-cli:ci bash -lc '
+              FILES=$(find /docs -type f -name "*.adoc" | wc -l)
+              if [ "$FILES" -eq 0 ]; then
+                echo "⚠️ No AsciiDoc files found"
+                exit 0
+              fi
+              find /docs -type f -name "*.adoc" -print0 | xargs -0 -n1 asciidoctor-doctest || true
+            ' | tee -a artifacts/asciidoc.log
 
-      # ───────────────────────────────
+      # ───────────────────────────────────────────────
       # 4️⃣ Spectral (OpenAPI)
-      # ───────────────────────────────
+      # ───────────────────────────────────────────────
       - name: 🔍 Validate OpenAPI specs
         run: |
-          echo "🔍 Running Spectral..."
-          docker run --rm -v "$PWD":/work -w /work docs-cli:ci bash -lc '
-            FILES=$(find . -type f \( -name "*.yaml" -o -name "*.yml" \) | wc -l)
-            if [ "$FILES" -eq 0 ]; then
-              echo "⚠️ No YAML files found — skipping"
-              exit 0
-            fi
-            find . -type f \( -name "*.yaml" -o -name "*.yml" \) -print0 | xargs -0 -n1 spectral lint --quiet 2>&1 || true
-          ' | tee -a artifacts/openapi.log
+          docker run --rm \
+            -v "${{ github.workspace }}/docs":/docs \
+            docs-cli:ci bash -lc '
+              FILES=$(find /docs -type f \( -name "*.yaml" -o -name "*.yml" \) | wc -l)
+              if [ "$FILES" -eq 0 ]; then
+                echo "⚠️ No OpenAPI specs found"
+                exit 0
+              fi
+              find /docs -type f \( -name "*.yaml" -o -name "*.yml" \) -print0 | xargs -0 -n1 spectral lint --quiet || true
+            ' | tee -a artifacts/openapi.log
 
-      # ───────────────────────────────
-      # 5️⃣ Vale (style)
-      # ───────────────────────────────
+      # ───────────────────────────────────────────────
+      # 5️⃣ Vale Style
+      # ───────────────────────────────────────────────
       - name: ✍️ Run Vale style checks
         run: |
-          echo "✍️ Running Vale..."
-          docker run --rm -v "$PWD":/work -w /work docs-cli:ci bash -lc '
-            FILES=$(find . -type f \( -name "*.md" -o -name "*.adoc" \) | wc -l)
-            if [ "$FILES" -eq 0 ]; then
-              echo "⚠️ No documentation files found — skipping"
-              exit 0
-            fi
-            vale --output=line --minAlertLevel=warning . 2>&1 || true
-          ' | tee -a artifacts/vale.log
+          docker run --rm \
+            -v "${{ github.workspace }}/docs":/docs \
+            docs-cli:ci bash -lc '
+              vale --output=line --minAlertLevel=warning /docs || true
+            ' | tee -a artifacts/vale.log
 
-      # ───────────────────────────────
-      # 6️⃣ Collect & Summarize
-      # ───────────────────────────────
-      - name: 📊 Summarize results in artifact
+      # ───────────────────────────────────────────────
+      # 6️⃣ Merge & Report
+      # ───────────────────────────────────────────────
+      - name: 📊 Merge results
         if: always()
         run: |
-          echo "🧾 Merging logs..."
           mkdir -p artifacts
           cat artifacts/*.log > artifacts/docs-quality.log || true
 
@@ -131,27 +108,18 @@ jobs:
           name: docs-quality-report
           path: artifacts/docs-quality.log
 
-      # ───────────────────────────────
-      # 7️⃣ GitHub Summary (Warnings)
-      # ───────────────────────────────
-      - name: ⚠️ Generate Warning Summary
+      - name: ⚠️ Show GitHub Summary
         if: always()
         run: |
-          echo "⚙️ Creating GitHub Summary..."
           echo "## 🧾 Documentation Quality Report" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          grep -E "MD|Vale|WARN|ERROR|Error|warning|Spectral" artifacts/docs-quality.log || echo "✅ No warnings found" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
 
-          if [ -s artifacts/docs-quality.log ]; then
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            grep -E "MD|Vale|WARN|ERROR|Error|warning|error|Spectral" artifacts/docs-quality.log | head -n 200 >> $GITHUB_STEP_SUMMARY || echo "✅ No warnings found" >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-          else
-            echo "✅ No warnings found" >> $GITHUB_STEP_SUMMARY
-          fi
-
-      # ───────────────────────────────
-      # 8️⃣ PR Comment
-      # ───────────────────────────────
+      # ───────────────────────────────────────────────
+      # 7️⃣ PR Comment
+      # ───────────────────────────────────────────────
       - name: 💬 Comment Results in PR
         if: always() && github.event_name == 'pull_request'
         uses: marocchino/sticky-pull-request-comment@v2

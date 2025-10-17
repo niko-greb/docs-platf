@@ -1,23 +1,27 @@
-FROM python:3.11-slim
+# ===========================
+# 📦 Docs CI Image (Universal)
+# ===========================
+FROM node:18-slim
 
-ENV DEBIAN_FRONTEND=noninteractive
+# Устанавливаем системные утилиты и пакеты
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+      ruby-full \
+      python3-pip \
+      git \
+      curl && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    ruby-full nodejs npm wget jq git build-essential ruby-dev libxml2-dev libxslt-dev zlib1g-dev && \
-    rm -rf /var/lib/apt/lists/*
- 
-# RUN npm install markdownlint-cli2 --save-dev    
-RUN npm install -g markdownlint-cli2 @stoplight/spectral-cli
-RUN python3 -m pip install --upgrade pip setuptools wheel && pip install --no-cache-dir mdformat
+# Устанавливаем линтеры и утилиты
+RUN npm install -g \
+      markdownlint-cli2 \
+      markdownlint \
+      @stoplight/spectral-cli && \
+    pip3 install mdformat && \
+    gem install --no-document asciidoctor && \
+    gem install --no-document asciidoctor-doctest && \
+    gem install --no-document rubocop
 
-# ✅ Ruby tools: AsciiDoctor и asciidoctor-lint с GitHub
-RUN gem install --no-document asciidoctor rubocop asciidoctor-doctest
-
-# Vale
-RUN wget -q https://github.com/errata-ai/vale/releases/download/v2.22.0/vale_2.22.0_Linux_64-bit.tar.gz -O /tmp/vale.tar.gz \
-    && tar -xzf /tmp/vale.tar.gz -C /usr/local/bin --strip-components=1 vale \
-    && rm /tmp/vale.tar.gz
-
+# Настраиваем рабочую директорию
 WORKDIR /work
-ENTRYPOINT ["/bin/bash", "-lc"]
-CMD ["echo 'Docs-as-Code CLI ready ✅' && bash"]
+ENTRYPOINT ["/bin/bash"]
