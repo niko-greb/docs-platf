@@ -6,7 +6,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ruby-full nodejs npm wget jq git build-essential ruby-dev libxml2-dev libxslt-dev zlib1g-dev && \
     rm -rf /var/lib/apt/lists/*
  
-RUN npm install markdownlint-cli2 markdownlint --save-dev    
+RUN npm install markdownlint-cli2 --save-dev    
 RUN npm install -g @stoplight/spectral-cli
 RUN python3 -m pip install --upgrade pip setuptools wheel && pip install --no-cache-dir mdformat
 
