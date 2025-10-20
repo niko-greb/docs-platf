@@ -61,6 +61,49 @@ jobs:
           name: docs-quality-report
           path: artifacts/
 
+      - name: 🔎 Read linter logs into step outputs
+        id: read_logs
+        shell: bash
+        run: |
+          mkdir -p artifacts
+
+          # helper: read file safely, limit size (head), convert to safe block
+          read_log() {
+            local file="$1"
+            local max_lines="${2:-200}"
+            if [ -f "$file" ] && [ -s "$file" ]; then
+              # take head to limit size, then escape backticks (and make sure %0A used only if needed)
+              head -n "$max_lines" "$file" \
+                | sed -e 's/`/\\`/g' -e 's/\r$//' \
+                > /tmp/trimmed.log
+              # wrap in code fence markers later; emit as multiline output
+              echo "-----BEGIN_LOG-----"
+              cat /tmp/trimmed.log
+              echo "-----END_LOG-----"
+            else
+              echo "No file: $file or file empty"
+            fi
+          }
+
+          echo "Reading markdownlint..."
+          md_block="$(read_log artifacts/markdownlint.log 200)"
+          echo "markdown<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$md_block" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+          echo "Reading openapi..."
+          openapi_block="$(read_log artifacts/openapi.log 200)"
+          echo "openapi<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$openapi_block" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+          echo "Reading vale..."
+          vale_block="$(read_log artifacts/vale.log 200)"
+          echo "vale<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$vale_block" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+    
+
       # ─────────────────────────────────────────────
       # 5️⃣ Комментарий в Pull Request
       # ─────────────────────────────────────────────
@@ -77,9 +120,19 @@ jobs:
             🧩 Review detailed results in attached artifacts.
 
             ---
-            📋 **Quick Summary**
-            ```bash
-            $(cat artifacts/markdownlint.log 2>/dev/null || echo "No markdown lint results")
-            $(cat artifacts/openapi.log 2>/dev/null || echo "No OpenAPI lint results")
-            $(cat artifacts/vale.log 2>/dev/null || echo "No Vale results")
+            📋 **Quick Summary (trimmed, head only)**
+            **Markdownlint**
+            ```text
+            ${{ steps.read_logs.outputs.markdown }}
             ```
+
+            **OpenAPI (Spectral)**
+            ```text
+            ${{ steps.read_logs.outputs.openapi }}
+            ```
+
+            **Vale**
+            ```text
+            ${{ steps.read_logs.outputs.vale }}
+            ```
+
