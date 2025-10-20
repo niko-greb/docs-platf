@@ -10,7 +10,7 @@
 == Запрос
 POST /pos/order/{guid}
 
-include::shared/headers-auth.adoc[]
+// include::../shared/headers-auth.adoc[]
 
 === Параметры пути
 |===
@@ -19,7 +19,7 @@ include::shared/headers-auth.adoc[]
 |===
 
 === Тело запроса
-include::examples/order-example.json[]
+// include::../examples/order-example.json[]
 
 == Ответ
 В случае успеха: `201 Created`
@@ -31,4 +31,4 @@ Location: /pos/order/{guid}
 ----
 
 == Ошибки
-include::shared/errors.adoc[]
+// include::../shared/errors.adoc[]

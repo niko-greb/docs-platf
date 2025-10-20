@@ -1,1 +1,50 @@
-asciidoctor-doctest not found
+ruby: warning: shebang line ending with \r may cause problems
+
+📄 Testing file: ./docs/04_architecture.adoc
+❌ FAILED: uninitialized constant Asciidoctor::Doctest
+
+📄 Testing file: ./docs/api/order-create.adoc
+❌ FAILED: uninitialized constant Asciidoctor::Doctest
+
+📄 Testing file: ./docs/shared/errors.adoc
+❌ FAILED: uninitialized constant Asciidoctor::Doctest
+
+📄 Testing file: ./docs/shared/headers-auth.adoc
+❌ FAILED: uninitialized constant Asciidoctor::Doctest
+asciidoctor: ERROR: 04_architecture.adoc: line 10: include file not found: /work/docs/missing_file.adoc
+❌ Syntax error in ./docs/04_architecture.adoc (see log)
+asciidoctor: ERROR: order-create.adoc: line 13: include file not found: /work/docs/api/shared/headers-auth.adoc
+asciidoctor: ERROR: order-create.adoc: line 22: include file not found: /work/docs/api/examples/order-example.json
+asciidoctor: ERROR: order-create.adoc: line 34: include file not found: /work/docs/api/shared/errors.adoc
+❌ Syntax error in ./docs/api/order-create.adoc (see log)
+asciidoctor: ERROR: 04_architecture.adoc: line 10: include file not found: /work/docs/missing_file.adoc
+❌ Syntax error in ./docs/04_architecture.adoc (see log)
+asciidoctor: ERROR: order-create.adoc: line 13: include file not found: /work/docs/api/shared/headers-auth.adoc
+asciidoctor: ERROR: order-create.adoc: line 22: include file not found: /work/docs/api/examples/order-example.json
+asciidoctor: ERROR: order-create.adoc: line 34: include file not found: /work/docs/api/shared/errors.adoc
+❌ Syntax error in ./docs/api/order-create.adoc (see log)
+asciidoctor: ERROR: 04_architecture.adoc: line 10: include file not found: /work/missing_file.adoc
+❌ Syntax error in ./docs/04_architecture.adoc (see log)
+asciidoctor: ERROR: order-create.adoc: line 13: include file not found: /work/shared/headers-auth.adoc
+asciidoctor: ERROR: order-create.adoc: line 22: include file not found: /work/examples/order-example.json
+asciidoctor: ERROR: order-create.adoc: line 34: include file not found: /work/shared/errors.adoc
+❌ Syntax error in ./docs/api/order-create.adoc (see log)
+asciidoctor: ERROR: 04_architecture.adoc: line 10: include file not found: /work/missing_file.adoc
+❌ Syntax error in ./docs/04_architecture.adoc (see log)
+asciidoctor: ERROR: order-create.adoc: line 13: include file not found: /shared/headers-auth.adoc
+asciidoctor: ERROR: order-create.adoc: line 34: include file not found: /shared/errors.adoc
+❌ Syntax error in ./docs/api/order-create.adoc (see log)
+asciidoctor: ERROR: 04_architecture.adoc: line 10: include file not found: /work/missing_file.adoc
+❌ Syntax error in ./docs/04_architecture.adoc (see log)
+asciidoctor: ERROR: 04_architecture.adoc: line 10: include file not found: /work/missing_file.adoc
+❌ Syntax error in ./docs/04_architecture.adoc (see log)
+asciidoctor: ERROR: 04_architecture.adoc: line 10: include file not found: /work/missing_file.adoc
+❌ Syntax error in ./docs/04_architecture.adoc (see log)
+asciidoctor: ERROR: 04_architecture.adoc: line 10: include file not found: /work/docs/missing_file.adoc
+❌ Syntax error in ./docs/04_architecture.adoc (see log)
+asciidoctor: ERROR: 04_architecture.adoc: line 10: include file not found: /work/missing_file.adoc
+❌ Syntax error in ./docs/04_architecture.adoc (see log)
+asciidoctor: ERROR: 04_architecture.adoc: line 10: include file not found: /work/missing_file.adoc
+❌ Syntax error in ./docs/04_architecture.adoc (see log)
+asciidoctor: ERROR: 04_architecture.adoc: line 10: include file not found: /work/missing_file.adoc
+❌ Syntax error in ./docs/04_architecture.adoc (see log)

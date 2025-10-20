@@ -1,4 +1,21 @@
 markdownlint-cli2 v0.18.1 (markdownlint v0.38.0)
-Finding: **/*.md !node_modules !.git !.github !artifacts !scripts !.vale --format markdown docs/**/*.md !node_modules/** !.git/** !.github/** !artifacts/** !scripts/** !.vale/** !**/*.yml !**/*.yaml !Dockerfile !**/*.json !**/*.jsonc !**/*.ini
+Finding: **/*.md !node_modules !.git !.github !artifacts !scripts !.vale -config .markdownlint-cli2.jsonc false docs/**/*.md !.git/** !.github/** !artifacts/** !scripts/** !.vale/** !**/*.yml !**/*.yaml !Dockerfile !**/*.json !**/*.jsonc !**/*.ini
 Linting: 6 file(s)
 Summary: 17 error(s)
+docs/01_readme.md:8 MD032/blanks-around-lists Lists should be surrounded by blank lines [Context: "- `markdownlint-cli2`"]
+docs/05_bad_doc.md:1 MD022/blanks-around-headings Headings should be surrounded by blank lines [Expected: 1; Actual: 0; Below] [Context: "This is missing a top-level header"]
+docs/05_bad_doc.md:3:2 MD009/no-trailing-spaces Trailing spaces [Expected: 0 or 2; Actual: 1]
+docs/05_bad_doc.md:3 MD032/blanks-around-lists Lists should be surrounded by blank lines [Context: "-"]
+docs/05_bad_doc.md:3 MD032/blanks-around-lists Lists should be surrounded by blank lines [Context: "-"]
+docs/05_bad_doc.md:4:121 MD013/line-length Line length [Expected: 120; Actual: 128]
+docs/05_bad_doc.md:6 MD032/blanks-around-lists Lists should be surrounded by blank lines [Context: "- inconsistent list"]
+docs/05_bad_doc.md:7:1 MD004/ul-style Unordered list style [Expected: dash; Actual: asterisk]
+docs/05_bad_doc.md:7 MD032/blanks-around-lists Lists should be surrounded by blank lines [Context: "* next item"]
+docs/05_bad_doc.md:10:9 MD047/single-trailing-newline Files should end with a single newline character
+docs/06_bad_doc.md:3:4 MD009/no-trailing-spaces Trailing spaces [Expected: 0 or 2; Actual: 1]
+docs/06_bad_doc.md:3 MD022/blanks-around-headings Headings should be surrounded by blank lines [Expected: 1; Actual: 0; Above] [Context: "###"]
+docs/06_bad_doc.md:7 MD032/blanks-around-lists Lists should be surrounded by blank lines [Context: "- list"]
+docs/06_bad_doc.md:7 MD032/blanks-around-lists Lists should be surrounded by blank lines [Context: "- list"]
+docs/06_bad_doc.md:8:1 MD004/ul-style Unordered list style [Expected: dash; Actual: asterisk]
+docs/06_bad_doc.md:8 MD032/blanks-around-lists Lists should be surrounded by blank lines [Context: "* another style"]
+docs/06_bad_doc.md:10:37 MD047/single-trailing-newline Files should end with a single newline character

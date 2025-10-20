@@ -4,6 +4,8 @@ FROM python:3.11-slim
 ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /work
 
+COPY run_doctest.rb /work/run_doctest.rb
+
 # --- Системные зависимости ---
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ruby-full nodejs npm wget jq git build-essential ruby-dev libxml2-dev libxslt-dev zlib1g-dev ca-certificates && \
@@ -17,12 +19,7 @@ RUN python3 -m pip install --upgrade pip setuptools wheel && \
     pip install --no-cache-dir mdformat
 
 # --- Ruby утилиты ---
-RUN gem install --no-document asciidoctor rubocop
-
-# Добавляем Ruby пути
-ENV GEM_HOME="/usr/local/lib/ruby/gems/3.1.0"
-ENV GEM_PATH="/usr/local/lib/ruby/gems/3.1.0:/root/.local/share/gem/ruby/3.3.0:/usr/local/lib/ruby/gems/3.3.0"
-ENV PATH="$PATH:/usr/local/lib/ruby/gems/3.1.0/bin:/usr/local/lib/ruby/gems/3.3.0/bin"
+RUN gem install --no-document -n /usr/local/bin asciidoctor rubocop asciidoctor-doctest
 
 
 # --- Vale ---
