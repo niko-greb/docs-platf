@@ -1,5 +1,5 @@
 markdownlint-cli2 v0.18.1 (markdownlint v0.38.0)
-Finding: **/*.md !node_modules !.git !.github !artifacts !scripts !.vale -config .markdownlint-cli2.jsonc false docs/**/*.md !.git/** !.github/** !artifacts/** !scripts/** !.vale/** !**/*.yml !**/*.yaml !Dockerfile !**/*.json !**/*.jsonc !**/*.ini
+Finding: **/*.md !node_modules !.git !.github !artifacts !scripts !.vale false docs/**/*.md !.git/** !.github/** !artifacts/** !scripts/** !.vale/** !**/*.yml !**/*.yaml !Dockerfile !**/*.json !**/*.jsonc !**/*.ini
 Linting: 6 file(s)
 Summary: 17 error(s)
 docs/01_readme.md:8 MD032/blanks-around-lists Lists should be surrounded by blank lines [Context: "- `markdownlint-cli2`"]

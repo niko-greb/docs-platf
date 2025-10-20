@@ -48,3 +48,19 @@ asciidoctor: ERROR: 04_architecture.adoc: line 10: include file not found: /work
 ❌ Syntax error in ./docs/04_architecture.adoc (see log)
 asciidoctor: ERROR: 04_architecture.adoc: line 10: include file not found: /work/missing_file.adoc
 ❌ Syntax error in ./docs/04_architecture.adoc (see log)
+
+📄 Testing file: ./docs/04_architecture.adoc
+❌ FAILED: uninitialized constant Asciidoctor::Doctest
+❌ ./docs/04_architecture.adoc failed
+
+📄 Testing file: ./docs/api/order-create.adoc
+❌ FAILED: uninitialized constant Asciidoctor::Doctest
+❌ ./docs/api/order-create.adoc failed
+
+📄 Testing file: ./docs/shared/errors.adoc
+❌ FAILED: uninitialized constant Asciidoctor::Doctest
+❌ ./docs/shared/errors.adoc failed
+
+📄 Testing file: ./docs/shared/headers-auth.adoc
+❌ FAILED: uninitialized constant Asciidoctor::Doctest
+❌ ./docs/shared/headers-auth.adoc failed

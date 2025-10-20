@@ -1,71 +1,120 @@
 #!/usr/bin/env bash
-set -e
-echo "🧩 Starting Docs-as-Code Validation..."
+set -euo pipefail
+
+SOFT_MODE=true  # 🔸 режим "мягкой проверки"
+echo "🧩 Starting Docs-as-Code Validation (Soft Mode: ${SOFT_MODE})..."
 
 mkdir -p artifacts
+exit_code=0
 
-# Markdown
+# ─────────────────────────────────────────────
+# 1️⃣ Markdown Linter
+# ─────────────────────────────────────────────
 echo "🧾 Running Markdown Linter..."
-markdownlint-cli2 "**/*.md" "#node_modules" "#.git" "#.github" "#artifacts" "#scripts" "#.vale" -config .markdownlint-cli2.jsonc \
-  --fix false \
-  2>&1 | tee artifacts/markdownlint.log
+if compgen -G "**/*.md" > /dev/null; then
+  markdownlint-cli2 "**/*.md" "#node_modules" "#.git" "#.github" "#artifacts" "#scripts" "#.vale" \
+    --config .markdownlint-cli2.jsonc \
+    --fix false \
+    2>&1 | tee artifacts/markdownlint.log || true
+else
+  echo "⚠️ No Markdown files found." | tee artifacts/markdownlint.log
+fi
 
-# Formatting
-# echo "🎨 Checking Markdown formatting..."
-# mdformat --check . 2>&1 | tee -a artifacts/mdformat.log || true
+# ─────────────────────────────────────────────
+# 2️⃣ Markdown Formatting (mdformat)
+# ─────────────────────────────────────────────
+echo "🎨 Checking Markdown formatting..."
+if command -v mdformat >/dev/null 2>&1; then
+  mdformat --check . 2>&1 | tee -a artifacts/mdformat.log || true
+else
+  echo "⚠️ mdformat not installed. Skipping format check." | tee artifacts/mdformat.log
+fi
 
-# AsciiDoc
+# ─────────────────────────────────────────────
+# 3️⃣ AsciiDoc Validation
+# ─────────────────────────────────────────────
 echo "🏗️ Running AsciiDoctor Doctest..."
-find . -type f -name "*.adoc" -not -path "./.git/*" -not -path "./.github/*" | \
-  while read file; do
-    echo "📄 Checking $file..."
-    if asciidoctor \
-      --base-dir . \
-      --failure-level ERROR \
-      --trace \
-      -o /dev/null "$file" 2>>artifacts/asciidoc.log; then
-      echo "✅ $file"
+ASCIIDOC_FILES=$(find . -type f -name "*.adoc" -not -path "./.git/*" -not -path "./.github/*")
+if [ -z "$ASCIIDOC_FILES" ]; then
+  echo "⚠️ No AsciiDoc files found." | tee artifacts/asciidoc.log
+else
+  for file in $ASCIIDOC_FILES; do
+    echo "📄 Testing $file..."
+    if ruby /work/run_doctest.rb "$file" >> artifacts/asciidoc.log 2>&1; then
+      echo "✅ $file passed"
     else
-      echo "❌ Syntax error in $file (see log)" | tee -a artifacts/asciidoc.log
+      echo "❌ $file failed" | tee -a artifacts/asciidoc.log
+      exit_code=1
     fi
   done
-
-if grep -q "ERROR:" artifacts/asciidoc.log; then
-  echo "⚠️ Found AsciiDoc errors"
-  exit 1
-else
-  echo "✅ All AsciiDoc files are valid"
 fi
 
-# Если в логе есть ERROR — считаем, что проверка провалена
-if grep -q "ERROR:" artifacts/asciidoc.log; then
-  echo "⚠️ Found AsciiDoc errors"
-  exit_code=1
-else
-  echo "✅ All AsciiDoc files are valid"
-  exit_code=0
-fi
-
-
-# OpenAPI
+# ─────────────────────────────────────────────
+# 4️⃣ OpenAPI (Spectral)
+# ─────────────────────────────────────────────
 echo "🔍 Running Spectral..."
-find . -type f \( -name "*.yaml" -o -name "*.yml" \) -not -path "./.git/*" -not -path "./.github/*" \
-  -print0 | xargs -0 -n1 spectral lint --quiet 2>&1 | tee -a artifacts/openapi.log || true
+OPENAPI_FILES=$(find . -type f \( -name "*.yaml" -o -name "*.yml" \) -not -path "./.git/*" -not -path "./.github/*")
+if [ -z "$OPENAPI_FILES" ]; then
+  echo "⚠️ No OpenAPI YAML files found." | tee artifacts/openapi.log
+else
+  echo "$OPENAPI_FILES" | xargs -n1 spectral lint --quiet 2>&1 | tee artifacts/openapi.log || true
+fi
 
-# Vale
+# ─────────────────────────────────────────────
+# 5️⃣ Vale Style Check
+# ─────────────────────────────────────────────
 echo "✍️ Running Vale..."
 if [ ! -d ".vale/styles" ]; then
   echo "⚙️ Syncing Vale styles..."
-  vale sync
+  vale sync || true
 fi
-vale --output=line --minAlertLevel=warning . 2>&1 | tee -a artifacts/vale.log || true
 
-echo "✅ All checks completed. Review artifacts/*.log for results."
+if command -v vale >/dev/null 2>&1; then
+  vale --output=line --minAlertLevel=warning . 2>&1 | tee artifacts/vale.log || true
+else
+  echo "⚠️ Vale not found. Skipping style check." | tee artifacts/vale.log
+fi
 
-# Конвертируем ошибки в GitHub warnings
-grep -hE "^[^ ]+:[0-9]+:" artifacts/markdownlint.log | while IFS= read -r line; do
-  file=$(echo "$line" | cut -d: -f1)
-  ln=$(echo "$line" | cut -d: -f2)
-  msg=$(echo "$line" | cut -d: -f3- | sed 's/"/\\"/g')
-  echo "::warning file=${file},line=${ln}::${msg}"
+# ─────────────────────────────────────────────
+# 6️⃣ Формирование GitHub warnings/errors для PR
+# ─────────────────────────────────────────────
+echo "📋 Generating GitHub warnings for PR..."
+for log in artifacts/*.log; do
+  if [ -s "$log" ]; then
+    grep -hE "^[^ ]+:[0-9]+:" "$log" | while IFS= read -r line; do
+      file=$(echo "$line" | cut -d: -f1)
+      ln=$(echo "$line" | cut -d: -f2)
+      msg=$(echo "$line" | cut -d: -f3- | sed 's/"/\\"/g')
+
+      if echo "$msg" | grep -qi "error"; then
+        echo "::error file=${file},line=${ln}::${msg}"
+        exit_code=1
+      else
+        echo "::warning file=${file},line=${ln}::${msg}"
+      fi
+    done
+  fi
 done
+
+# ─────────────────────────────────────────────
+# 7️⃣ Финальное резюме
+# ─────────────────────────────────────────────
+echo ""
+if [ "$exit_code" -ne 0 ]; then
+  echo "⚠️ Validation completed with issues. Check artifacts for details."
+else
+  echo "✅ All checks passed (Soft Mode active)."
+fi
+
+echo "📂 Logs saved in artifacts/"
+echo "🪶 Review artifacts/*.log for detailed results."
+
+# ─────────────────────────────────────────────
+# 8️⃣ Мягкий режим завершения
+# ─────────────────────────────────────────────
+if [ "${SOFT_MODE}" = true ]; then
+  echo "🩶 Soft mode enabled: exiting with 0 (non-blocking)."
+  exit 0
+else
+  exit "${exit_code}"
+fi

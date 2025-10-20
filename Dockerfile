@@ -4,7 +4,8 @@ FROM python:3.11-slim
 ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /work
 
-COPY run_doctest.rb /work/run_doctest.rb
+COPY run_doctest.rb /usr/local/bin/run_doctest.rb
+RUN chmod +x /usr/local/bin/run_doctest.rb
 
 # --- Системные зависимости ---
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -19,8 +20,7 @@ RUN python3 -m pip install --upgrade pip setuptools wheel && \
     pip install --no-cache-dir mdformat
 
 # --- Ruby утилиты ---
-RUN gem install --no-document -n /usr/local/bin asciidoctor rubocop asciidoctor-doctest
-
+RUN gem install --no-document asciidoctor rubocop asciidoctor-doctest
 
 # --- Vale ---
 RUN wget -q https://github.com/errata-ai/vale/releases/download/v2.22.0/vale_2.22.0_Linux_64-bit.tar.gz -O /tmp/vale.tar.gz \
