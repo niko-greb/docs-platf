@@ -1,4 +1,4 @@
-name: 🧱 Docs-as-Code CI (Soft Mode)
+name: 🧱 Docs-as-Code CI
 
 on:
   push:
@@ -14,20 +14,22 @@ jobs:
   docs-validate:
     name: 🧩 Validate Documentation
     runs-on: ubuntu-latest
-    continue-on-error: true  # мягкий режим
+
+    # 💡 Автоматический выбор режима:
+    # - при pull_request → мягкий (continue-on-error: true)
+    # - при push → строгий (continue-on-error: false)
+    continue-on-error: ${{ github.event_name == 'pull_request' }}
 
     steps:
-      - name: 🧩 Run Docs-as-Code validation (Soft Mode)
-        run: |
-          docker run --rm -v "$PWD":/work -w /work docs-cli:ci \
-            bash ./scripts/run-linters.sh
-
       # ─────────────────────────────────────────────
-      # 1️⃣ Инициализация и сборка образа
+      # 1️⃣ Клонируем репозиторий
       # ─────────────────────────────────────────────
       - name: 🧭 Checkout repository
         uses: actions/checkout@v4
 
+      # ─────────────────────────────────────────────
+      # 2️⃣ Подготавливаем Docker окружение
+      # ─────────────────────────────────────────────
       - name: 🧰 Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -41,65 +43,16 @@ jobs:
           tags: docs-cli:ci
 
       # ─────────────────────────────────────────────
-      # 2️⃣ Markdown Linter + mdformat
+      # 3️⃣ Запускаем общий валидатор (run-linters.sh)
       # ─────────────────────────────────────────────
-      - name: 🧾 Run Markdown and Format Linters
+      - name: 🚀 Run Docs-as-Code Validation
         run: |
-          mkdir -p artifacts
-          echo "🧾 Running Markdown Linter..."
-          docker run --rm -v "$PWD":/work -w /work docs-cli:ci bash -lc '
-            echo "📂 Working dir: $(pwd)"
-            markdownlint-cli2 "**/*.md" "#node_modules" "#.git" "#.github" "#artifacts" "#scripts" "#.vale" --format markdown | tee artifacts/markdownlint.log || true
-            echo "✅ Markdown lint finished"
-            mdformat --check . 2>&1 | tee -a artifacts/mdformat.log || true
-          '
+          echo "🔧 Starting Docs-as-Code Validation..."
+          docker run --rm -v "$PWD":/work -w /work docs-cli:ci \
+            bash ./scripts/run-linters.sh
 
       # ─────────────────────────────────────────────
-      # 3️⃣ AsciiDoctor Doctest
-      # ─────────────────────────────────────────────
-      - name: 🏗️ Validate AsciiDoc
-        run: |
-          docker run --rm -v "$PWD":/work -w /work docs-cli:ci bash -lc '
-            FILES=$(find . -type f -name "*.adoc" | wc -l)
-            if [ "$FILES" -eq 0 ]; then
-              echo "⚠️ No AsciiDoc files found" | tee artifacts/asciidoc.log
-              exit 0
-            fi
-            echo "🏗️ Running AsciiDoctor Doctest..."
-            ruby /usr/local/bin/run_doctest.rb $(find . -type f -name "*.adoc" -not -path "./.github/*" -not -path "./.git/*") \
-              2>&1 | tee artifacts/asciidoc.log || true
-            echo "📋 AsciiDoctor results saved to artifacts/asciidoc.log"
-          '
-
-      # ─────────────────────────────────────────────
-      # 4️⃣ OpenAPI Validation (Spectral)
-      # ─────────────────────────────────────────────
-      - name: 🔍 Validate OpenAPI specs
-        run: |
-          docker run --rm -v "$PWD":/work -w /work docs-cli:ci bash -lc '
-            FILES=$(find . -type f \( -name "*.yaml" -o -name "*.yml" \) -not -path "./.github/*" -not -path "./.git/*" | wc -l)
-            if [ "$FILES" -eq 0 ]; then
-              echo "⚠️ No OpenAPI YAML files found" | tee artifacts/openapi.log
-              exit 0
-            fi
-            find . -type f \( -name "*.yaml" -o -name "*.yml" \) -not -path "./.github/*" -not -path "./.git/*" -print0 | xargs -0 -n1 spectral lint --quiet 2>&1 | tee -a artifacts/openapi.log || true
-          '
-
-      # ─────────────────────────────────────────────
-      # 5️⃣ Vale Style Checker
-      # ─────────────────────────────────────────────
-      - name: ✍️ Run Vale Style Checks
-        run: |
-          docker run --rm -v "$PWD":/work -w /work docs-cli:ci bash -lc '
-            if [ ! -d ".vale/styles" ]; then
-              echo "⚙️ Syncing Vale styles..."
-              vale sync
-            fi
-            vale --output=line --minAlertLevel=warning . 2>&1 | tee artifacts/vale.log || true
-          '
-
-      # ─────────────────────────────────────────────
-      # 6️⃣ Отчёт и обратная связь в PR
+      # 4️⃣ Публикуем артефакты (логи линтеров)
       # ─────────────────────────────────────────────
       - name: 📎 Upload Linter Reports
         if: always()
@@ -108,16 +61,25 @@ jobs:
           name: docs-quality-report
           path: artifacts/
 
+      # ─────────────────────────────────────────────
+      # 5️⃣ Комментарий в Pull Request
+      # ─────────────────────────────────────────────
       - name: 💬 Comment Summary in PR
         if: github.event_name == 'pull_request'
         uses: marocchino/sticky-pull-request-comment@v2
         with:
-          header: Docs-as-Code CI Report
+          header: "🧾 Docs-as-Code CI Report"
           message: |
-            🧾 **Docs-as-Code CI Report**
-            > Markdown, AsciiDoc, OpenAPI, Vale — checked ✅
+            🧱 **Docs-as-Code CI completed**
+            Mode: ${{ github.event_name == 'pull_request' && 'Soft (non-blocking)' || 'Strict (blocking)' }}
+
+            ✅ Markdown, AsciiDoc, OpenAPI, Vale — checked.
+            🧩 Review detailed results in attached artifacts.
+
+            ---
+            📋 **Quick Summary**
             ```bash
-            $(cat artifacts/markdownlint.log 2>/dev/null || echo "No markdown log")
-            $(cat artifacts/openapi.log 2>/dev/null || echo "No openapi log")
-            $(cat artifacts/vale.log 2>/dev/null || echo "No vale log")
+            $(cat artifacts/markdownlint.log 2>/dev/null || echo "No markdown lint results")
+            $(cat artifacts/openapi.log 2>/dev/null || echo "No OpenAPI lint results")
+            $(cat artifacts/vale.log 2>/dev/null || echo "No Vale results")
             ```
