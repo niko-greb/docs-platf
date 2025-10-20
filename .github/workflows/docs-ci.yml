@@ -1,140 +1,115 @@
-# .github/workflows/docs-ci.yml
-name: "Docs-as-Code CI (soft mode)"
+name: 🧱 Docs-as-Code CI (Soft Mode)
 
-# Запуск при PR и при пуше в main — можно расширить.
 on:
-  pull_request:
-    branches: [ main ]
   push:
     branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
-# Нужно дать action'у право писать комментарии в PR
 permissions:
   contents: read
   pull-requests: write
 
 jobs:
   docs-validate:
-    name: "📚 Validate docs (Markdown / AsciiDoc / OpenAPI / Style)"
+    name: 🧩 Validate Documentation
     runs-on: ubuntu-latest
-    # НЕ ломаем пайплайн при предупреждениях — мы работаем в soft mode.
-    # Ошибки шагов обрабатываются внутри скриптов (set +e) и/или через allow-failure.
-    steps:
+    continue-on-error: true  # мягкий режим
 
-      # 1) Забираем код
-      - name: "🔁 Checkout repository"
+    steps:
+      # ─────────────────────────────────────────────
+      # 1️⃣ Инициализация и сборка образа
+      # ─────────────────────────────────────────────
+      - name: 🧭 Checkout repository
         uses: actions/checkout@v4
 
-      # 2) Подготовим buildx — используется для сборки образа (кросс-платформенность)
-      - name: "🧰 Set up Docker Buildx"
+      - name: 🧰 Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # 3) Собираем docs-cli образ. Используем load:true чтобы образ был доступен локально в runner.
-      #    Если build занимает много времени — можно пушить образ в GHCR и брать оттуда.
-      - name: "🏗️ Build docs-cli image"
+      - name: 🏗️ Build docs-cli image
         uses: docker/build-push-action@v6
         with:
           context: .
           file: ./Dockerfile
-          push: false      # не пушим в registry
-          load: true       # загружаем образ в локальный docker daemon runner'а
+          push: false
+          load: true
           tags: docs-cli:ci
 
-      # 4) Создаём каталог артефактов (на всякий случай)
-      - name: "📁 Prepare artifacts dir"
+      # ─────────────────────────────────────────────
+      # 2️⃣ Markdown Linter + mdformat
+      # ─────────────────────────────────────────────
+      - name: 🧾 Run Markdown and Format Linters
         run: |
           mkdir -p artifacts
+          echo "🧾 Running Markdown Linter..."
+          docker run --rm -v "$PWD":/work -w /work docs-cli:ci bash -lc '
+            echo "📂 Working dir: $(pwd)"
+            markdownlint-cli2 "**/*.md" "#node_modules" "#.git" "#.github" "#artifacts" "#scripts" "#.vale" --format markdown | tee artifacts/markdownlint.log || true
+            echo "✅ Markdown lint finished"
+            mdformat --check . 2>&1 | tee -a artifacts/mdformat.log || true
+          '
 
-      # 5) Запускаем единый скрипт линтеров (локально внутри контейнера)
-      #    scripts/run-linters.sh должен:
-      #      - запускать markdownlint, asciidoctor-doctest, spectral, vale и т.д.
-      #      - сохранять логи в artifacts/*.log
-      #      - быть в soft-mode (не падать при ошибках): set +e внутри скриптов
-      - name: "🧪 Run all linters (in container)"
-        id: run_linters
+      # ─────────────────────────────────────────────
+      # 3️⃣ AsciiDoctor Doctest
+      # ─────────────────────────────────────────────
+      - name: 🏗️ Validate AsciiDoc
         run: |
-          set -o pipefail || true
-          echo "🧩 Running linters through scripts/run-linters.sh (inside container docs-cli:ci)"
-          # Запускаем контейнер и внутри него выполняем наш скрипт.
-          # Важно: вывод дублируем на stdout (tee), чтобы лог видел runner.
-          docker run --rm \
-            -v "${{ github.workspace }}":/work \
-            -w /work \
-            docs-cli:ci bash -lc "chmod +x scripts/run-linters.sh && scripts/run-linters.sh" \
-            2>&1 | tee artifacts/run-linters.log || true
+          docker run --rm -v "$PWD":/work -w /work docs-cli:ci bash -lc '
+            FILES=$(find . -type f -name "*.adoc" | wc -l)
+            if [ "$FILES" -eq 0 ]; then
+              echo "⚠️ No AsciiDoc files found" | tee artifacts/asciidoc.log
+              exit 0
+            fi
+            find . -type f -name "*.adoc" -not -path "./.github/*" -not -path "./.git/*" | xargs -n1 asciidoctor-doctest 2>&1 | tee -a artifacts/asciidoc.log || true
+          '
 
-      # 6) Дополнительно — распарсить markdownlint-лог и превратить строки path:line:msg в ::warning
-      #    Это создаст видимые warning-аннотации в Checks.
-      - name: "⚠️ Convert linter lines to GitHub warnings (annotations)"
-        if: always()
+      # ─────────────────────────────────────────────
+      # 4️⃣ OpenAPI Validation (Spectral)
+      # ─────────────────────────────────────────────
+      - name: 🔍 Validate OpenAPI specs
         run: |
-          echo "🔍 Parsing artifacts for warn-able patterns..."
-          # Собираем все лог-файлы, ищем строки вида path:line:message (типичный markdownlint)
-          # и выводим GitHub-style annotations.
-          # Обрати внимание: аннотации должны печататься в stdout непосредственно: ::warning file=...,line=...::msg
-          set +e
-          grep -hE "^[^ ]+:[0-9]+:" artifacts/*.log || true \
-            | while IFS= read -r line ; do
-                # Разделяем первую часть: path и line (path:line:rest)
-                file=$(echo "$line" | cut -d: -f1)
-                ln=$(echo "$line" | cut -d: -f2)
-                msg=$(echo "$line" | cut -d: -f3- | sed 's/"/\\"/g' )
-                # Печатаем warning — это создаст визуальную аннотацию в Checks
-                echo "::warning file=${file},line=${ln}::${msg}"
-              done
+          docker run --rm -v "$PWD":/work -w /work docs-cli:ci bash -lc '
+            FILES=$(find . -type f \( -name "*.yaml" -o -name "*.yml" \) -not -path "./.github/*" -not -path "./.git/*" | wc -l)
+            if [ "$FILES" -eq 0 ]; then
+              echo "⚠️ No OpenAPI YAML files found" | tee artifacts/openapi.log
+              exit 0
+            fi
+            find . -type f \( -name "*.yaml" -o -name "*.yml" \) -not -path "./.github/*" -not -path "./.git/*" -print0 | xargs -0 -n1 spectral lint --quiet 2>&1 | tee -a artifacts/openapi.log || true
+          '
 
-      # 7) Собираем единый сводный лог (всегда)
-      - name: "📦 Merge logs into docs-quality.log"
-        if: always()
+      # ─────────────────────────────────────────────
+      # 5️⃣ Vale Style Checker
+      # ─────────────────────────────────────────────
+      - name: ✍️ Run Vale Style Checks
         run: |
-          mkdir -p artifacts
-          # если нет логов — создаём пустой файл с пометкой "no warnings"
-          if ls artifacts/*.log >/dev/null 2>&1; then
-            cat artifacts/*.log > artifacts/docs-quality.log || true
-          else
-            echo "✅ No logs generated" > artifacts/docs-quality.log
-          fi
-          echo "🗂 artifacts/docs-quality.log size: $(stat -c%s artifacts/docs-quality.log || true)"
+          docker run --rm -v "$PWD":/work -w /work docs-cli:ci bash -lc '
+            if [ ! -d ".vale/styles" ]; then
+              echo "⚙️ Syncing Vale styles..."
+              vale sync
+            fi
+            vale --output=line --minAlertLevel=warning . 2>&1 | tee artifacts/vale.log || true
+          '
 
-      # 8) Загружаем артефакт (всегда, чтобы можно было скачать)
-      - name: "📎 Upload docs-quality report"
+      # ─────────────────────────────────────────────
+      # 6️⃣ Отчёт и обратная связь в PR
+      # ─────────────────────────────────────────────
+      - name: 📎 Upload Linter Reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: docs-quality-report
-          path: artifacts/docs-quality.log
-          if-no-files-found: warn
+          path: artifacts/
 
-      # 9) Пишем краткий summary (Checks → Summary), чтобы люди видели короткую сводку без скачивания
-      - name: "📝 Write GitHub Step Summary (short)"
-        if: always()
-        run: |
-          echo "## 🧾 Documentation Quality Report" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          # Показываем первые 200 релевантных строк (паттерны MD, Vale, Spectral)
-          grep -E "MD[0-9]{3}|Vale|Spectral|ERROR|WARN|Error|warning" artifacts/docs-quality.log | head -n 200 || echo "✅ No warnings found"
-          echo '```' >> $GITHUB_STEP_SUMMARY
-
-      # 10) Оставляем/обновляем sticky-комментарий в PR с полным логом (только для pull_request)
-      - name: "💬 Post results as sticky PR comment"
-        if: always() && github.event_name == 'pull_request'
+      - name: 💬 Comment Summary in PR
+        if: github.event_name == 'pull_request'
         uses: marocchino/sticky-pull-request-comment@v2
         with:
-          header: docs-ci-report
+          header: Docs-as-Code CI Report
           message: |
-            🧾 **Documentation CI Report**
+            🧾 **Docs-as-Code CI Report**
+            > Markdown, AsciiDoc, OpenAPI, Vale — checked ✅
+            ```bash
+            $(cat artifacts/markdownlint.log 2>/dev/null || echo "No markdown log")
+            $(cat artifacts/openapi.log 2>/dev/null || echo "No openapi log")
+            $(cat artifacts/vale.log 2>/dev/null || echo "No vale log")
             ```
-            $(cat artifacts/docs-quality.log || echo "✅ No warnings found")
-            ```
-
-      # 11) Доп. совет: опциональный step, чтобы fail CI if critical errors found
-      #     (не включён по умолчанию — оставить soft-mode; при желании включи)
-      # - name: "❗ Fail on critical"
-      #   if: always()
-      #   run: |
-      #     if grep -q "CRITICAL" artifacts/docs-quality.log; then
-      #       echo "Found CRITICAL issues; failing the job."
-      #       exit 1
-      #     fi
-

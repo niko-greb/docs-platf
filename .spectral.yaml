@@ -1,7 +1,19 @@
-extends: "spectral:oas"
+extends:
+  - "spectral:oas"
+
 rules:
-  info-contact: off
-  info-description: warn
-  info-license: off
-  no-$ref-siblings: error
-  operation-description: warn
+  info-description:
+    description: Info "description" must be present and non-empty string.
+    severity: warn
+    given: $.info
+    then:
+      field: description
+      function: truthy
+
+  operation-description:
+    description: Operation "description" must be present and non-empty string.
+    severity: warn
+    given: $.paths[*][*]
+    then:
+      field: description
+      function: truthy

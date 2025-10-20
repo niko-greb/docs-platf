@@ -1,0 +1,149 @@
+[41mE100[0m [.vale.ini not found] Runtime error
+
+open : no such file or directory
+
+[90m[3mExecution stopped with code 1.[0m[90m[0m
+.markdownlint.json:3:15:Vale.Spelling:Did you really mean 'line_length'?
+.markdownlint.json:9:6:Vale.Spelling:Did you really mean 'node_modules'?
+.spectral.yaml:12:1:Vale.Spelling:Did you really mean 'ignoreFiles'?
+.markdownlint-cli2.jsonc:2:15:Vale.Spelling:Did you really mean 'Config'?
+.markdownlint-cli2.jsonc:3:108:Vale.Spelling:Did you really mean 'config'?
+.markdownlint-cli2.jsonc:4:4:Vale.Spelling:Did you really mean 'outputFormatters'?
+.markdownlint-cli2.jsonc:8:4:Vale.Spelling:Did you really mean 'noGlobs'?
+.markdownlint-cli2.jsonc:27:17:Vale.Spelling:Did you really mean 'line_length'?
+.vale/styles/Russian/spelling.yml:5:1:Vale.Spelling:Did you really mean 'ignorecase'?
+.vale/styles/Russian/spelling.yml:7:5:Russian.spelling:Возможная орфографическая ошибка: 'автоатизация'
+.vale/styles/Russian/spelling.yml:8:5:Russian.spelling:Возможная орфографическая ошибка: 'програмирование'
+.vale/styles/Russian/spelling.yml:9:5:Russian.spelling:Возможная орфографическая ошибка: 'инженерр'
+.vale/styles/Russian/spelling.yml:10:5:Russian.spelling:Возможная орфографическая ошибка: 'кмпьютер'
+.vale/styles/Russian/terms.yml:5:1:Vale.Spelling:Did you really mean 'ignorecase'?
+.vale/styles/Russian/terms.yml:7:4:Russian.terms:Используйте 'docs-as-code' вместо 'документация как код'
+.vale/styles/Russian/terms.yml:8:4:Russian.terms:Используйте 'CI' вместо 'си-ай'
+.vale/styles/Russian/terms.yml:9:4:Russian.terms:Используйте 'prod' вместо 'прод'
+.vale/styles/Russian/terms.yml:10:4:Russian.terms:Используйте 'dev' вместо 'дев'
+.vale/styles/Russian/terms.yml:10:11:Vale.Spelling:Did you really mean 'dev'?
+artifacts/asciidoc.log:1:1:Vale.Spelling:Did you really mean 'xargs'?
+artifacts/asciidoc.log:2:1:Vale.Spelling:Did you really mean 'xargs'?
+artifacts/markdownlint.log:1:1:Vale.Spelling:Did you really mean 'markdownlint'?
+.github/workflows/docs-ci.yml:6:3:Vale.Spelling:Did you really mean 'pull_request'?
+.github/workflows/docs-ci.yml:26:31:Vale.Spelling:Did you really mean 'Buildx'?
+.github/workflows/docs-ci.yml:39:31:Vale.Spelling:Did you really mean 'mdformat'?
+.github/workflows/docs-ci.yml:43:11:Vale.Spelling:Did you really mean 'mkdir'?
+.github/workflows/docs-ci.yml:46:36:Vale.Spelling:Did you really mean 'pwd'?
+.github/workflows/docs-ci.yml:49:13:Vale.Spelling:Did you really mean 'mdformat'?
+.github/workflows/docs-ci.yml:53:25:Vale.Spelling:Did you really mean 'Doctest'?
+.github/workflows/docs-ci.yml:58:53:Vale.Spelling:Did you really mean 'wc'?
+.github/workflows/docs-ci.yml:62:13:Vale.Spelling:Did you really mean 'fi'?
+.github/workflows/docs-ci.yml:63:92:Vale.Spelling:Did you really mean 'xargs'?
+.github/workflows/docs-ci.yml:72:123:Vale.Spelling:Did you really mean 'wc'?
+.github/workflows/docs-ci.yml:74:69:Vale.Spelling:Did you really mean 'openapi'?
+.github/workflows/docs-ci.yml:77:123:Vale.Spelling:Did you really mean 'xargs'?
+.github/workflows/docs-ci.yml:104:35:Vale.Spelling:Did you really mean 'pull_request'?
+Dockerfile:9:15:Vale.Spelling:Did you really mean 'nodejs'?
+Dockerfile:9:22:Vale.Spelling:Did you really mean 'npm'?
+Dockerfile:9:26:Vale.Spelling:Did you really mean 'wget'?
+Dockerfile:9:31:Vale.Spelling:Did you really mean 'jq'?
+Dockerfile:13:5:Vale.Spelling:Did you really mean 'npm'?
+Dockerfile:16:42:Vale.Spelling:Did you really mean 'setuptools'?
+Dockerfile:17:32:Vale.Spelling:Did you really mean 'mdformat'?
+Dockerfile:20:31:Vale.Spelling:Did you really mean 'asciidoctor'?
+Dockerfile:20:43:Vale.Spelling:Did you really mean 'rubocop'?
+Dockerfile:20:51:Vale.Spelling:Did you really mean 'asciidoctor'?
+Dockerfile:27:5:Vale.Spelling:Did you really mean 'wget'?
+Dockerfile:28:8:Vale.Spelling:Did you really mean 'mkdir'?
+Dockerfile:30:8:Vale.Spelling:Did you really mean 'mv'?
+Dockerfile:32:5:Vale.Spelling:Did you really mean 'mkdir'?
+Dockerfile:40:5:Vale.Spelling:Did you really mean 'rubocop'?
+Dockerfile:41:16:Vale.Spelling:Did you really mean 'mdformat'?
+artifacts/openapi.log:5:37:Vale.Spelling:Did you really mean 'infos'?
+artifacts/openapi.log:10:37:Vale.Spelling:Did you really mean 'infos'?
+artifacts/openapi.log:15:37:Vale.Spelling:Did you really mean 'infos'?
+artifacts/openapi.log:20:37:Vale.Spelling:Did you really mean 'infos'?
+artifacts/openapi.log:25:37:Vale.Spelling:Did you really mean 'infos'?
+artifacts/openapi.log:30:37:Vale.Spelling:Did you really mean 'infos'?
+artifacts/openapi.log:36:26:Vale.Spelling:Did you really mean 'operationId'?
+artifacts/openapi.log:39:39:Vale.Spelling:Did you really mean 'infos'?
+artifacts/openapi.log:45:39:Vale.Spelling:Did you really mean 'infos'?
+.gitlab-ci.yml:20:5:Vale.Spelling:Did you really mean 'expire_in'?
+.gitlab-ci.yml:24:36:Vale.Spelling:Did you really mean 'merge_request_event'?
+.gitlab-ci.yml:38:34:Vale.Spelling:Did you really mean 'pwd'?
+.gitlab-ci.yml:40:47:Vale.Spelling:Did you really mean 'wc'?
+.gitlab-ci.yml:41:91:Vale.Spelling:Did you really mean 'fi'?
+.gitlab-ci.yml:42:54:Vale.Spelling:Did you really mean 'markdownlint'?
+.gitlab-ci.yml:44:3:Vale.Spelling:Did you really mean 'allow_failure'?
+.gitlab-ci.yml:47:5:Vale.Spelling:Did you really mean 'expire_in'?
+.gitlab-ci.yml:61:36:Vale.Spelling:Did you really mean 'Doctest'?
+.gitlab-ci.yml:63:49:Vale.Spelling:Did you really mean 'wc'?
+.gitlab-ci.yml:65:54:Vale.Spelling:Did you really mean 'doctest'?
+.gitlab-ci.yml:66:49:Vale.Spelling:Did you really mean 'xargs'?
+.gitlab-ci.yml:67:3:Vale.Spelling:Did you really mean 'allow_failure'?
+.gitlab-ci.yml:70:5:Vale.Spelling:Did you really mean 'expire_in'?
+.gitlab-ci.yml:86:72:Vale.Spelling:Did you really mean 'wc'?
+.gitlab-ci.yml:89:72:Vale.Spelling:Did you really mean 'xargs'?
+.gitlab-ci.yml:90:3:Vale.Spelling:Did you really mean 'allow_failure'?
+.gitlab-ci.yml:93:5:Vale.Spelling:Did you really mean 'expire_in'?
+.gitlab-ci.yml:109:71:Vale.Spelling:Did you really mean 'wc'?
+.gitlab-ci.yml:112:3:Vale.Spelling:Did you really mean 'allow_failure'?
+.gitlab-ci.yml:115:5:Vale.Spelling:Did you really mean 'expire_in'?
+.gitlab-ci.yml:134:5:Vale.Spelling:Did you really mean 'expire_in'?
+.gitlab-ci.yml:137:3:Vale.Spelling:Did you really mean 'allow_failure'?
+docs/06_bad_doc.md:6:8:Vale.Spelling:Did you really mean 'looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong'?
+docs/02_api_example.yaml:1:1:Vale.Spelling:Did you really mean 'openapi'?
+docs/api/order.yaml:1:1:Vale.Spelling:Did you really mean 'openapi'?
+docs/api/order.yaml:11:5:Vale.Spelling:Did you really mean 'url'?
+docs/api/order.yaml:14:15:Vale.Spelling:Did you really mean 'guid'?
+docs/api/order.yaml:17:7:Vale.Spelling:Did you really mean 'operationId'?
+docs/api/order.yaml:17:20:Vale.Spelling:Did you really mean 'createOrder'?
+docs/api/order.yaml:19:17:Vale.Spelling:Did you really mean 'guid'?
+docs/api/order.yaml:24:21:Vale.Spelling:Did you really mean 'uuid'?
+docs/api/order.yaml:27:7:Vale.Spelling:Did you really mean 'requestBody'?
+docs/api/order.yaml:52:11:Vale.Spelling:Did you really mean 'guid'?
+docs/api/order.yaml:58:9:Vale.Spelling:Did you really mean 'id_local'?
+docs/api/order.yaml:63:19:Vale.Spelling:Did you really mean 'uuid'?
+docs/api/order.yaml:70:11:Vale.Spelling:Did you really mean 'enum'?
+docs/api/order.yaml:73:11:Vale.Spelling:Did you really mean 'enum'?
+docs/api/order.yaml:79:17:Vale.Spelling:Did you really mean 'boolean'?
+docs/api/order.yaml:85:11:Vale.Spelling:Did you really mean 'dish_id'?
+docs/api/order.yaml:89:9:Vale.Spelling:Did you really mean 'dish_id'?
+docs/api/order.yaml:97:9:Vale.Spelling:Did you really mean 'modificators'?
+scripts/lint-asciidoc.sh:3:15:Vale.Spelling:Did you really mean 'dirname'?
+scripts/lint-asciidoc.sh:3:36:Vale.Spelling:Did you really mean 'pwd'?
+scripts/lint-asciidoc.sh:5:1:Vale.Spelling:Did you really mean 'mkdir'?
+scripts/lint-asciidoc.sh:7:30:Vale.Spelling:Did you really mean 'Doctest'?
+scripts/lint-asciidoc.sh:8:41:Vale.Spelling:Did you really mean 'wc'?
+scripts/lint-asciidoc.sh:12:1:Vale.Spelling:Did you really mean 'fi'?
+scripts/lint-asciidoc.sh:14:41:Vale.Spelling:Did you really mean 'xargs'?
+scripts/lint-format.sh:3:15:Vale.Spelling:Did you really mean 'dirname'?
+scripts/lint-format.sh:3:36:Vale.Spelling:Did you really mean 'pwd'?
+scripts/lint-format.sh:5:1:Vale.Spelling:Did you really mean 'mkdir'?
+scripts/lint-format.sh:7:43:Vale.Spelling:Did you really mean 'mdformat'?
+scripts/lint-format.sh:8:1:Vale.Spelling:Did you really mean 'mdformat'?
+scripts/lint-format.sh:9:19:Vale.Spelling:Did you really mean 'mdformat'?
+scripts/lint-md.sh:3:15:Vale.Spelling:Did you really mean 'dirname'?
+scripts/lint-md.sh:3:36:Vale.Spelling:Did you really mean 'pwd'?
+scripts/lint-md.sh:5:1:Vale.Spelling:Did you really mean 'mkdir'?
+scripts/lint-md.sh:10:9:Vale.Spelling:Did you really mean 'Markdownlint'?
+scripts/lint-openapi.sh:3:15:Vale.Spelling:Did you really mean 'dirname'?
+scripts/lint-openapi.sh:3:36:Vale.Spelling:Did you really mean 'pwd'?
+scripts/lint-openapi.sh:5:1:Vale.Spelling:Did you really mean 'mkdir'?
+scripts/lint-openapi.sh:8:64:Vale.Spelling:Did you really mean 'wc'?
+scripts/lint-openapi.sh:12:1:Vale.Spelling:Did you really mean 'fi'?
+scripts/lint-openapi.sh:14:64:Vale.Spelling:Did you really mean 'xargs'?
+scripts/lint-style.sh:3:15:Vale.Spelling:Did you really mean 'dirname'?
+scripts/lint-style.sh:3:36:Vale.Spelling:Did you really mean 'pwd'?
+scripts/lint-style.sh:5:1:Vale.Spelling:Did you really mean 'mkdir'?
+scripts/lint-style.sh:8:63:Vale.Spelling:Did you really mean 'wc'?
+scripts/lint-style.sh:12:1:Vale.Spelling:Did you really mean 'fi'?
+scripts/run-linters.sh:5:1:Vale.Spelling:Did you really mean 'mkdir'?
+scripts/run-linters.sh:14:1:Vale.Spelling:Did you really mean 'mdformat'?
+scripts/run-linters.sh:17:30:Vale.Spelling:Did you really mean 'Doctest'?
+scripts/run-linters.sh:19:13:Vale.Spelling:Did you really mean 'xargs'?
+scripts/run-linters.sh:24:13:Vale.Spelling:Did you really mean 'xargs'?
+scripts/run-linters.sh:31:1:Vale.Spelling:Did you really mean 'fi'?
+[41mE100[0m [.vale.ini not found] Runtime error
+
+key-value delimiter not found: .github/**,
+
+
+[90m[3mExecution stopped with code 1.[0m[90m[0m
+docs/06_bad_doc.md:6:8:Vale.Spelling:Did you really mean 'looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong'?
