@@ -16,3 +16,4 @@
 ```bash
 docker build -t docs-cli:ci -f .repo/Dockerfile .
 docker run --rm -v "$PWD":/work -w /work docs-cli:ci bash .repo/ci/scripts/run-linters.sh
+```
