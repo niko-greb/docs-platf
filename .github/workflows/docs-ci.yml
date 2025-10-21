@@ -14,25 +14,21 @@ jobs:
   docs-validate:
     name: 🧩 Validate Documentation
     runs-on: ubuntu-latest
-
-    # 💡 Автоматический выбор режима:
-    # - при pull_request → мягкий (continue-on-error: true)
-    # - при push → строгий (continue-on-error: false)
     continue-on-error: ${{ github.event_name == 'pull_request' }}
 
     steps:
       # ─────────────────────────────────────────────
-      # 1️⃣ Клонируем репозиторий
+      # 1️⃣ Инициализация
       # ─────────────────────────────────────────────
       - name: 🧭 Checkout repository
         uses: actions/checkout@v4
 
-      # ─────────────────────────────────────────────
-      # 2️⃣ Подготавливаем Docker окружение
-      # ─────────────────────────────────────────────
       - name: 🧰 Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      # ─────────────────────────────────────────────
+      # 2️⃣ Сборка контейнера с CLI
+      # ─────────────────────────────────────────────
       - name: 🏗️ Build docs-cli image
         uses: docker/build-push-action@v6
         with:
@@ -43,7 +39,7 @@ jobs:
           tags: docs-cli:ci
 
       # ─────────────────────────────────────────────
-      # 3️⃣ Запускаем общий валидатор (run-linters.sh)
+      # 3️⃣ Запуск линтеров в контейнере
       # ─────────────────────────────────────────────
       - name: 🚀 Run Docs-as-Code Validation
         run: |
@@ -52,7 +48,7 @@ jobs:
             bash ./scripts/run-linters.sh
 
       # ─────────────────────────────────────────────
-      # 4️⃣ Публикуем артефакты (логи линтеров)
+      # 4️⃣ Сохраняем артефакты
       # ─────────────────────────────────────────────
       - name: 📎 Upload Linter Reports
         if: always()
@@ -61,22 +57,61 @@ jobs:
           name: docs-quality-report
           path: artifacts/
 
+      # ─────────────────────────────────────────────
+      # 5️⃣ Фильтр изменённых файлов
+      # ─────────────────────────────────────────────
+      - name: 🎨 Annotate PR (only changed files)
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          echo "🧠 Gathering changed files in PR..."
+          git fetch origin ${{ github.event.pull_request.base.ref }} --depth=1
+          git diff --name-only origin/${{ github.event.pull_request.base.ref }} HEAD > changed_files.txt
+
+          echo "📄 Changed files:"
+          cat changed_files.txt || echo "⚠️ No changes detected."
+
+          echo "🧩 Parsing linter logs for annotations..."
+          for log in artifacts/*.log; do
+            [ -f "$log" ] || continue
+            echo "Processing $log..."
+            while IFS= read -r line; do
+              if [[ "$line" =~ ^([^:]+):([0-9]+):[[:space:]]*(.*)$ ]]; then
+                file="${BASH_REMATCH[1]}"
+                line_number="${BASH_REMATCH[2]}"
+                message="${BASH_REMATCH[3]}"
+                # Пропускаем файлы, не входящие в изменённые
+                if ! grep -qx "$file" changed_files.txt 2>/dev/null; then
+                  continue
+                fi
+                # Определяем тип (warning/error)
+                if echo "$message" | grep -qiE "error|failed|missing"; then
+                  echo "::error file=${file},line=${line_number}::${message}"
+                else
+                  echo "::warning file=${file},line=${line_number}::${message}"
+                fi
+              fi
+            done < "$log"
+          done
+
+          echo "✅ Annotation completed for changed files only."
+
+      # ─────────────────────────────────────────────
+      # 6️⃣ Читаем trimmed логи
+      # ─────────────────────────────────────────────
       - name: 🔎 Read linter logs into step outputs
         id: read_logs
         shell: bash
         run: |
           mkdir -p artifacts
 
-          # helper: read file safely, limit size (head), convert to safe block
           read_log() {
             local file="$1"
             local max_lines="${2:-200}"
             if [ -f "$file" ] && [ -s "$file" ]; then
-              # take head to limit size, then escape backticks (and make sure %0A used only if needed)
               head -n "$max_lines" "$file" \
                 | sed -e 's/`/\\`/g' -e 's/\r$//' \
                 > /tmp/trimmed.log
-              # wrap in code fence markers later; emit as multiline output
               echo "-----BEGIN_LOG-----"
               cat /tmp/trimmed.log
               echo "-----END_LOG-----"
@@ -102,10 +137,9 @@ jobs:
           echo "vale<<EOF" >> "$GITHUB_OUTPUT"
           echo "$vale_block" >> "$GITHUB_OUTPUT"
           echo "EOF" >> "$GITHUB_OUTPUT"
-    
 
       # ─────────────────────────────────────────────
-      # 5️⃣ Комментарий в Pull Request
+      # 7️⃣ Автоматический комментарий в PR
       # ─────────────────────────────────────────────
       - name: 💬 Comment Summary in PR
         if: github.event_name == 'pull_request'
@@ -113,26 +147,27 @@ jobs:
         with:
           header: "🧾 Docs-as-Code CI Report"
           message: |
-            🧱 **Docs-as-Code CI completed**
-            Mode: ${{ github.event_name == 'pull_request' && 'Soft (non-blocking)' || 'Strict (blocking)' }}
+            ## 🧱 **Docs-as-Code CI Summary**
+            **Mode:** ${{ github.event_name == 'pull_request' && '🩶 Soft (non-blocking)' || '🔥 Strict (blocking)' }}
 
-            ✅ Markdown, AsciiDoc, OpenAPI, Vale — checked.
-            🧩 Review detailed results in attached artifacts.
+            ✅ **Markdown**, 🏗️ **AsciiDoc**, 🔍 **OpenAPI**, ✍️ **Vale** — checked.
 
             ---
-            📋 **Quick Summary (trimmed, head only)**
-            **Markdownlint**
-            ```text
+            ### 📋 Quick Summary (first 200 lines)
+            **🧾 Markdownlint**
+            ```diff
             ${{ steps.read_logs.outputs.markdown }}
             ```
 
-            **OpenAPI (Spectral)**
-            ```text
+            **🔍 OpenAPI (Spectral)**
+            ```diff
             ${{ steps.read_logs.outputs.openapi }}
             ```
 
-            **Vale**
-            ```text
+            **✍️ Vale**
+            ```diff
             ${{ steps.read_logs.outputs.vale }}
             ```
 
+            ---
+            📦 _Full reports available in build artifacts (docs-quality-report)_.
