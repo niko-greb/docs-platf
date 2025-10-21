@@ -8,11 +8,11 @@ begin
     puts "Убедитесь, что гем asciidoctor-doctest установлен."
     exit 1
   end
-  
+
   files = ARGV.any? ? ARGV : Dir.glob('**/*.adoc')
-  
+
   errors = 0
-  
+
   files.each do |file|
     puts "\n📄 Testing file: #{file}"
     begin
@@ -23,5 +23,5 @@ begin
       errors += 1
     end
   end
-  
+
   exit(errors > 0 ? 1 : 0)

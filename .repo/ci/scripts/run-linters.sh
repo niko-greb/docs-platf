@@ -18,7 +18,7 @@ echo "🧾 Running Markdown Linter..."
 if find . -type f -name "*.md" -not -path "./.git/*" | grep -q .; then
   markdownlint-cli2 "**/*.md" \
     "#node_modules" "#.git" "#.github" "#artifacts" "#scripts" "#.vale" \
-    --config .markdownlint-cli2.jsonc \
+    --config .repo/config/.markdownlint-cli2.jsonc \
     --fix false \
     2>&1 | tee artifacts/markdownlint.log || true
 else
@@ -45,7 +45,7 @@ if [ -z "$ASCIIDOC_FILES" ]; then
 else
   for file in $ASCIIDOC_FILES; do
     echo "📄 Testing $file..."
-    if ruby /work/run_doctest.rb "$file" >> artifacts/asciidoc.log 2>&1; then
+    if ruby .repo/ci/scripts/run_doctest.rb "$file" >> artifacts/asciidoc.log 2>&1; then
       echo "✅ $file passed"
     else
       echo "❌ $file failed" | tee -a artifacts/asciidoc.log
@@ -58,24 +58,40 @@ fi
 # 4️⃣ OpenAPI Validation (Spectral)
 # ─────────────────────────────────────────────
 echo "🔍 Running Spectral..."
+
+# Диагностика
+if [ ! -f ".repo/config/.spectral.yaml" ]; then
+  echo "❌ .repo/config/.spectral.yaml not found!" | tee artifacts/openapi.log
+  exit 1
+fi
+
 OPENAPI_FILES=$(find . -type f \( -name "*.yaml" -o -name "*.yml" \) -not -path "./.git/*" -not -path "./.github/*")
+
 if [ -z "$OPENAPI_FILES" ]; then
   echo "⚠️ No OpenAPI YAML files found." | tee artifacts/openapi.log
 else
-  echo "$OPENAPI_FILES" | xargs -r -n1 spectral lint --quiet 2>&1 | tee artifacts/openapi.log || true
+  echo "📄 Found OpenAPI files:"
+  echo "$OPENAPI_FILES"
+
+  echo "$OPENAPI_FILES" | xargs -r -n1 \
+    spectral lint \
+      --ruleset .repo/config/.spectral.yaml \
+      --quiet \
+      --verbose \
+      2>&1 | tee artifacts/openapi.log || echo "⚠️ Spectral completed with errors"
 fi
 
 # ─────────────────────────────────────────────
 # 5️⃣ Vale Style Checker
 # ─────────────────────────────────────────────
 echo "✍️ Running Vale..."
-if [ ! -d ".vale/styles" ]; then
+if [ ! -d ".repo/config/.vale/styles" ]; then
   echo "⚙️ Syncing Vale styles..."
   vale sync || true
 fi
 
 if command -v vale >/dev/null 2>&1; then
-  vale --output=line --minAlertLevel=warning . 2>&1 | tee artifacts/vale.log || true
+   vale --config=.repo/config/.vale.ini --output=line --minAlertLevel=warning . 2>&1 | tee artifacts/vale.log || true
 else
   echo "⚠️ Vale not found. Skipping style check." | tee artifacts/vale.log
 fi

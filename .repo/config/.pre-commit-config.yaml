@@ -1,0 +1,73 @@
+repos:
+  # ────────────────────────────────
+  # 1️⃣ Общие проверки от pre-commit
+  # ────────────────────────────────
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-yaml
+      - id: check-json
+      - id: check-added-large-files
+
+  # ────────────────────────────────
+  # 2️⃣ Markdownlint CLI2 (через Docker)
+  # ────────────────────────────────
+  - repo: local
+    hooks:
+      - id: markdownlint
+        name: Markdownlint CLI2
+        entry: docker run --rm -v /:/workdir -w /workdir davidanson/markdownlint-cli2:v0.18.1
+        language: system
+        types: [markdown]
+        args: ["--config", ".markdownlint-cli2.jsonc"]
+        # glob'ы передаются автоматически
+
+  # ────────────────────────────────
+  # 3️⃣ mdformat (Python)
+  # ────────────────────────────────
+  - repo: https://github.com/executablebooks/mdformat
+    rev: 0.7.17
+    hooks:
+      - id: mdformat
+        additional_dependencies:
+          - mdformat-gfm
+          - mdformat-frontmatter
+        types: [markdown]
+
+  # ────────────────────────────────
+  # 4️⃣ Vale (style checker)
+  # ────────────────────────────────
+  - repo: local
+    hooks:
+      - id: vale
+        name: Vale Style Checker
+        entry: vale
+        language: system
+        types_or: [markdown, asciidoc]
+        args: [--minAlertLevel=warning]
+
+  # ────────────────────────────────
+  # 5️⃣ AsciiDoctor Syntax Check
+  # ────────────────────────────────
+  - repo: local
+    hooks:
+      - id: asciidoc-validate
+        name: AsciiDoctor Syntax Check
+        entry: asciidoctor --failure-level ERROR --trace -o /dev/null
+        language: system
+        types: [asciidoc]
+        require_serial: true  # важно: asciidoctor может падать при параллельном запуске
+
+  # ────────────────────────────────
+  # 6️⃣ Spectral (OpenAPI)
+  # ────────────────────────────────
+  - repo: local
+    hooks:
+      - id: spectral
+        name: Spectral OpenAPI Linter
+        entry: spectral lint --quiet
+        language: system
+        types_or: [yaml]
+        exclude: \.schema\.yml$

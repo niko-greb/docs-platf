@@ -1,101 +1,14 @@
-cat > docs/05_bad_doc.md <<'MD'
+cat > docs/05_bad_doc.md \<\<'MD'
 This is missing a top-level header
+
 ### 
 
----
+______________________________________________________________________
+
 A very looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong line.
+
 - list
+
 * another style
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-[Следующий 2шаг](hs://asciidoctor.org/
+\[Следующий 2шаг\](hs://asciidoctor.org/
