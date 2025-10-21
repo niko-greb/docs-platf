@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
-set -euo pipefail
+# ─────────────────────────────────────────────
+# 🧩 Docs-as-Code Validator (Soft Mode)
+# Проверяет Markdown, AsciiDoc, OpenAPI и Vale
+# ─────────────────────────────────────────────
 
-SOFT_MODE=true  # 🔸 режим "мягкой проверки"
+set -euo pipefail
+SOFT_MODE=true  # 🔸 "Мягкий режим" — не падает при ошибках
 echo "🧩 Starting Docs-as-Code Validation (Soft Mode: ${SOFT_MODE})..."
 
 mkdir -p artifacts
@@ -11,8 +15,9 @@ exit_code=0
 # 1️⃣ Markdown Linter
 # ─────────────────────────────────────────────
 echo "🧾 Running Markdown Linter..."
-if compgen -G "**/*.md" > /dev/null; then
-  markdownlint-cli2 "**/*.md" "#node_modules" "#.git" "#.github" "#artifacts" "#scripts" "#.vale" \
+if find . -type f -name "*.md" -not -path "./.git/*" | grep -q .; then
+  markdownlint-cli2 "**/*.md" \
+    "#node_modules" "#.git" "#.github" "#artifacts" "#scripts" "#.vale" \
     --config .markdownlint-cli2.jsonc \
     --fix false \
     2>&1 | tee artifacts/markdownlint.log || true
@@ -50,18 +55,18 @@ else
 fi
 
 # ─────────────────────────────────────────────
-# 4️⃣ OpenAPI (Spectral)
+# 4️⃣ OpenAPI Validation (Spectral)
 # ─────────────────────────────────────────────
 echo "🔍 Running Spectral..."
 OPENAPI_FILES=$(find . -type f \( -name "*.yaml" -o -name "*.yml" \) -not -path "./.git/*" -not -path "./.github/*")
 if [ -z "$OPENAPI_FILES" ]; then
   echo "⚠️ No OpenAPI YAML files found." | tee artifacts/openapi.log
 else
-  echo "$OPENAPI_FILES" | xargs -n1 spectral lint --quiet 2>&1 | tee artifacts/openapi.log || true
+  echo "$OPENAPI_FILES" | xargs -r -n1 spectral lint --quiet 2>&1 | tee artifacts/openapi.log || true
 fi
 
 # ─────────────────────────────────────────────
-# 5️⃣ Vale Style Check
+# 5️⃣ Vale Style Checker
 # ─────────────────────────────────────────────
 echo "✍️ Running Vale..."
 if [ ! -d ".vale/styles" ]; then
@@ -76,7 +81,7 @@ else
 fi
 
 # ─────────────────────────────────────────────
-# 6️⃣ Формирование GitHub warnings/errors для PR
+# 6️⃣ GitHub Warnings/Errors (PR annotations)
 # ─────────────────────────────────────────────
 echo "📋 Generating GitHub warnings for PR..."
 for log in artifacts/*.log; do
@@ -97,7 +102,7 @@ for log in artifacts/*.log; do
 done
 
 # ─────────────────────────────────────────────
-# 7️⃣ Финальное резюме
+# 7️⃣ Резюме
 # ─────────────────────────────────────────────
 echo ""
 if [ "$exit_code" -ne 0 ]; then
@@ -110,7 +115,7 @@ echo "📂 Logs saved in artifacts/"
 echo "🪶 Review artifacts/*.log for detailed results."
 
 # ─────────────────────────────────────────────
-# 8️⃣ Мягкий режим завершения
+# 8️⃣ Soft Mode Exit
 # ─────────────────────────────────────────────
 if [ "${SOFT_MODE}" = true ]; then
   echo "🩶 Soft mode enabled: exiting with 0 (non-blocking)."

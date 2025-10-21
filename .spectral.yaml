@@ -1,19 +1,21 @@
-extends:
-  - "spectral:oas"
+extends: ["spectral:oas", "spectral:asyncapi"]
+formats: ["oas3", "oas2"]
 
 rules:
-  info-description:
-    description: Info "description" must be present and non-empty string.
-    severity: warn
-    given: $.info
-    then:
-      field: description
-      function: truthy
+  info-contact: warn
+  info-description: warn
+  operation-description: warn
+  operation-operationId: warn
+  operation-tags: warn
+  oas3-api-servers: warn
 
-  operation-description:
-    description: Operation "description" must be present and non-empty string.
-    severity: warn
-    given: $.paths[*][*]
-    then:
-      field: description
-      function: truthy
+ignoreFiles:
+  - .github/**
+  - .git/**
+  - node_modules/**
+  - artifacts/**
+  - scripts/**
+  - .vale/**
+  - "*.log"
+  - "*.ini"
+  - Dockerfile
