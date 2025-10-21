@@ -1,0 +1,10 @@
+# styles/Russian/Terms.yml
+extends: substitution
+message: "Используйте '%s' вместо '%s'"
+level: warning
+ignorecase: true
+swap:
+  "документация как код": "docs-as-code"
+  "си-ай": "CI"
+  "прод": "prod"
+  "дев": "dev"

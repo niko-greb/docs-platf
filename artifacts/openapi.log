@@ -1,0 +1,36 @@
+
+/work/.gitlab-ci.yml
+ 1:1  warning  unrecognized-format  The provided document does not match any of the registered formats [OpenAPI 2.0 (Swagger), OpenAPI 3.x, OpenAPI 3.0.x, OpenAPI 3.1.x]
+
+✖ 1 problem (0 errors, 1 warning, 0 infos, 0 hints)
+
+/work/.spectral.yaml
+ 1:1  warning  unrecognized-format  The provided document does not match any of the registered formats [OpenAPI 2.0 (Swagger), OpenAPI 3.x, OpenAPI 3.0.x, OpenAPI 3.1.x]
+
+✖ 1 problem (0 errors, 1 warning, 0 infos, 0 hints)
+
+/work/.vale/styles/Russian/spelling.yml
+ 1:1  warning  unrecognized-format  The provided document does not match any of the registered formats [OpenAPI 2.0 (Swagger), OpenAPI 3.x, OpenAPI 3.0.x, OpenAPI 3.1.x]
+
+✖ 1 problem (0 errors, 1 warning, 0 infos, 0 hints)
+
+/work/.vale/styles/Russian/terms.yml
+ 1:1  warning  unrecognized-format  The provided document does not match any of the registered formats [OpenAPI 2.0 (Swagger), OpenAPI 3.x, OpenAPI 3.0.x, OpenAPI 3.1.x]
+
+✖ 1 problem (0 errors, 1 warning, 0 infos, 0 hints)
+
+/work/docs/02_api_example.yaml
+ 1:1  warning  oas3-api-servers       OpenAPI "servers" must be present and non-empty array.
+ 2:6  warning  info-contact           Info object must have "contact" object.                        info
+ 2:6  warning  info-description       Info "description" must be present and non-empty string.       info
+ 7:9  warning  operation-description  Operation "description" must be present and non-empty string.  paths./orders.get
+ 7:9  warning  operation-operationId  Operation must have "operationId".                             paths./orders.get
+ 7:9  warning  operation-tags         Operation must have non-empty "tags" array.                    paths./orders.get
+
+✖ 6 problems (0 errors, 6 warnings, 0 infos, 0 hints)
+
+/work/docs/api/order.yaml
+ 15:10  warning  operation-description  Operation "description" must be present and non-empty string.  paths./pos/order/{guid}.post
+ 15:10  warning  operation-tags         Operation must have non-empty "tags" array.                    paths./pos/order/{guid}.post
+
+✖ 2 problems (0 errors, 2 warnings, 0 infos, 0 hints)

@@ -1,4 +1,4 @@
-name: 🧱 Docs-as-Code CI (Soft Mode)
+name: 🧱 Docs-as-Code CI
 
 on:
   push:
@@ -14,15 +14,22 @@ jobs:
   docs-validate:
     name: 🧩 Validate Documentation
     runs-on: ubuntu-latest
-    continue-on-error: true
+
+    # 💡 Автоматический выбор режима:
+    # - при pull_request → мягкий (continue-on-error: true)
+    # - при push → строгий (continue-on-error: false)
+    continue-on-error: ${{ github.event_name == 'pull_request' }}
 
     steps:
-      # ───────────────────────────────
-      # 1️⃣ Checkout & Docker Build
-      # ───────────────────────────────
+      # ─────────────────────────────────────────────
+      # 1️⃣ Клонируем репозиторий
+      # ─────────────────────────────────────────────
       - name: 🧭 Checkout repository
         uses: actions/checkout@v4
 
+      # ─────────────────────────────────────────────
+      # 2️⃣ Подготавливаем Docker окружение
+      # ─────────────────────────────────────────────
       - name: 🧰 Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -35,121 +42,97 @@ jobs:
           load: true
           tags: docs-cli:ci
 
-      # ───────────────────────────────
-      # 2️⃣ Markdownlint
-      # ───────────────────────────────
-      - name: 🧾 Run Markdown Linter
+      # ─────────────────────────────────────────────
+      # 3️⃣ Запускаем общий валидатор (run-linters.sh)
+      # ─────────────────────────────────────────────
+      - name: 🚀 Run Docs-as-Code Validation
         run: |
-          mkdir -p artifacts
-          echo "🧾 Running Markdown Linter..."
-          docker run --rm \
-            -v "$PWD/docs":/docs \
-            -v "$PWD/artifacts":/out \
-            docs-cli:ci bash -lc '
-              cd /docs
-              FILES=$(find . -type f -name "*.md" | wc -l)
-              if [ "$FILES" -eq 0 ]; then
-                echo "⚠️ No Markdown files found" | tee /out/markdownlint.log
-                exit 0
-              fi
-              echo "📂 Found $FILES Markdown files"
-              markdownlint-cli2 "**/*.md" "#node_modules" --format markdown | tee /out/markdownlint.log || true
-            '
+          echo "🔧 Starting Docs-as-Code Validation..."
+          docker run --rm -v "$PWD":/work -w /work docs-cli:ci \
+            bash ./scripts/run-linters.sh
 
-          echo "📋 Markdownlint results:"
-          cat artifacts/markdownlint.log || echo "⚠️ No lint output generated"
-
-
-      # ───────────────────────────────
-      # 3️⃣ Asciidoctor
-      # ───────────────────────────────
-      - name: 🏗️ Validate AsciiDoc files
-        run: |
-          echo "🏗️ Running Asciidoctor Doctest..."
-          docker run --rm -v "$PWD":/work -w /work docs-cli:ci bash -lc '
-            FILES=$(find . -type f -name "*.adoc" | wc -l)
-            if [ "$FILES" -eq 0 ]; then
-              echo "⚠️ No AsciiDoc files found — skipping"
-              exit 0
-            fi
-            find . -type f -name "*.adoc" -print0 | xargs -0 -n1 asciidoctor-doctest 2>&1 || true
-          ' | tee -a artifacts/asciidoc.log
-
-      # ───────────────────────────────
-      # 4️⃣ Spectral (OpenAPI)
-      # ───────────────────────────────
-      - name: 🔍 Validate OpenAPI specs
-        run: |
-          echo "🔍 Running Spectral..."
-          docker run --rm -v "$PWD":/work -w /work docs-cli:ci bash -lc '
-            FILES=$(find . -type f \( -name "*.yaml" -o -name "*.yml" \) | wc -l)
-            if [ "$FILES" -eq 0 ]; then
-              echo "⚠️ No YAML files found — skipping"
-              exit 0
-            fi
-            find . -type f \( -name "*.yaml" -o -name "*.yml" \) -print0 | xargs -0 -n1 spectral lint --quiet 2>&1 || true
-          ' | tee -a artifacts/openapi.log
-
-      # ───────────────────────────────
-      # 5️⃣ Vale (style)
-      # ───────────────────────────────
-      - name: ✍️ Run Vale style checks
-        run: |
-          echo "✍️ Running Vale..."
-          docker run --rm -v "$PWD":/work -w /work docs-cli:ci bash -lc '
-            FILES=$(find . -type f \( -name "*.md" -o -name "*.adoc" \) | wc -l)
-            if [ "$FILES" -eq 0 ]; then
-              echo "⚠️ No documentation files found — skipping"
-              exit 0
-            fi
-            vale --output=line --minAlertLevel=warning . 2>&1 || true
-          ' | tee -a artifacts/vale.log
-
-      # ───────────────────────────────
-      # 6️⃣ Collect & Summarize
-      # ───────────────────────────────
-      - name: 📊 Summarize results in artifact
-        if: always()
-        run: |
-          echo "🧾 Merging logs..."
-          mkdir -p artifacts
-          cat artifacts/*.log > artifacts/docs-quality.log || true
-
-      - name: 📎 Upload Linter Report
+      # ─────────────────────────────────────────────
+      # 4️⃣ Публикуем артефакты (логи линтеров)
+      # ─────────────────────────────────────────────
+      - name: 📎 Upload Linter Reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: docs-quality-report
-          path: artifacts/docs-quality.log
+          path: artifacts/
 
-      # ───────────────────────────────
-      # 7️⃣ GitHub Summary (Warnings)
-      # ───────────────────────────────
-      - name: ⚠️ Generate Warning Summary
-        if: always()
+      - name: 🔎 Read linter logs into step outputs
+        id: read_logs
+        shell: bash
         run: |
-          echo "⚙️ Creating GitHub Summary..."
-          echo "## 🧾 Documentation Quality Report" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
+          mkdir -p artifacts
 
-          if [ -s artifacts/docs-quality.log ]; then
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            grep -E "MD|Vale|WARN|ERROR|Error|warning|error|Spectral" artifacts/docs-quality.log | head -n 200 >> $GITHUB_STEP_SUMMARY || echo "✅ No warnings found" >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-          else
-            echo "✅ No warnings found" >> $GITHUB_STEP_SUMMARY
-          fi
+          # helper: read file safely, limit size (head), convert to safe block
+          read_log() {
+            local file="$1"
+            local max_lines="${2:-200}"
+            if [ -f "$file" ] && [ -s "$file" ]; then
+              # take head to limit size, then escape backticks (and make sure %0A used only if needed)
+              head -n "$max_lines" "$file" \
+                | sed -e 's/`/\\`/g' -e 's/\r$//' \
+                > /tmp/trimmed.log
+              # wrap in code fence markers later; emit as multiline output
+              echo "-----BEGIN_LOG-----"
+              cat /tmp/trimmed.log
+              echo "-----END_LOG-----"
+            else
+              echo "No file: $file or file empty"
+            fi
+          }
 
-      # ───────────────────────────────
-      # 8️⃣ PR Comment
-      # ───────────────────────────────
-      - name: 💬 Comment Results in PR
-        if: always() && github.event_name == 'pull_request'
+          echo "Reading markdownlint..."
+          md_block="$(read_log artifacts/markdownlint.log 200)"
+          echo "markdown<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$md_block" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+          echo "Reading openapi..."
+          openapi_block="$(read_log artifacts/openapi.log 200)"
+          echo "openapi<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$openapi_block" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+          echo "Reading vale..."
+          vale_block="$(read_log artifacts/vale.log 200)"
+          echo "vale<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$vale_block" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+    
+
+      # ─────────────────────────────────────────────
+      # 5️⃣ Комментарий в Pull Request
+      # ─────────────────────────────────────────────
+      - name: 💬 Comment Summary in PR
+        if: github.event_name == 'pull_request'
         uses: marocchino/sticky-pull-request-comment@v2
         with:
-          header: docs-ci-report
+          header: "🧾 Docs-as-Code CI Report"
           message: |
-            🧾 **Documentation CI Report**
+            🧱 **Docs-as-Code CI completed**
+            Mode: ${{ github.event_name == 'pull_request' && 'Soft (non-blocking)' || 'Strict (blocking)' }}
+
+            ✅ Markdown, AsciiDoc, OpenAPI, Vale — checked.
+            🧩 Review detailed results in attached artifacts.
+
+            ---
+            📋 **Quick Summary (trimmed, head only)**
+            **Markdownlint**
+            ```text
+            ${{ steps.read_logs.outputs.markdown }}
             ```
-            $(cat artifacts/docs-quality.log || echo "✅ No warnings found")
+
+            **OpenAPI (Spectral)**
+            ```text
+            ${{ steps.read_logs.outputs.openapi }}
             ```
+
+            **Vale**
+            ```text
+            ${{ steps.read_logs.outputs.vale }}
+            ```
+

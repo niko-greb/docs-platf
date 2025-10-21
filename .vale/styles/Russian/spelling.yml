@@ -1,0 +1,10 @@
+# styles/Russian/Spelling.yml
+extends: existence
+message: "Возможная орфографическая ошибка: '%s'"
+level: error
+ignorecase: false
+tokens:
+  - автоатизация
+  - програмирование
+  - инженерр
+  - кмпьютер

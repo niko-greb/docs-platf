@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set +e
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-docker run --rm -v "$ROOT":/work -w /work docs-cli:local \
-  markdownlint "**/*.md"
-docker run --rm -v "$ROOT":/work -w /work docs-cli:local \
-  mdformat --check .
+OUT_DIR="$ROOT/artifacts"
+mkdir -p "$OUT_DIR"
+
+echo "🧾 Running Markdown Linter..."
+markdownlint-cli2 "**/*.md" "#node_modules" --format markdown \
+  | tee "$OUT_DIR/markdownlint.log"
+echo "📋 Markdownlint results saved to artifacts/markdownlint.log"

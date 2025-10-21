@@ -1,7 +1,21 @@
-extends: "spectral:oas"
+extends: ["spectral:oas", "spectral:asyncapi"]
+formats: ["oas3", "oas2"]
+
 rules:
-  info-contact: off
+  info-contact: warn
   info-description: warn
-  info-license: off
-  no-$ref-siblings: error
   operation-description: warn
+  operation-operationId: warn
+  operation-tags: warn
+  oas3-api-servers: warn
+
+ignoreFiles:
+  - .github/**
+  - .git/**
+  - node_modules/**
+  - artifacts/**
+  - scripts/**
+  - .vale/**
+  - "*.log"
+  - "*.ini"
+  - Dockerfile
