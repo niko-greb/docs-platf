@@ -1,1 +1,2 @@
-docs/06_bad_doc.md:6:8:Vale.Spelling:Did you really mean 'looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong'?
+docs/06_bad_doc.md:8:8:Vale.Spelling:Did you really mean 'looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong'?
+docs/05_bad_doc.md:5:14:Vale.Spelling:Did you really mean 'waaaaay'?

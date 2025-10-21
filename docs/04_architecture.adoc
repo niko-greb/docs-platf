@@ -8,3 +8,4 @@ This is a sample AsciiDoc document.
 == Integration Flow
 
 include::missing_file.adoc[]
+include::/shared/headers-auth.adoc[]

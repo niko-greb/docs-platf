@@ -64,3 +64,81 @@ asciidoctor: ERROR: 04_architecture.adoc: line 10: include file not found: /work
 📄 Testing file: ./docs/shared/headers-auth.adoc
 ❌ FAILED: uninitialized constant Asciidoctor::Doctest
 ❌ ./docs/shared/headers-auth.adoc failed
+
+📄 Testing file: ./docs/04_architecture.adoc
+❌ FAILED: uninitialized constant Asciidoctor::Doctest
+❌ ./docs/04_architecture.adoc failed
+
+📄 Testing file: ./docs/POS/api/schemas/Dish.adoc
+❌ FAILED: uninitialized constant Asciidoctor::Doctest
+❌ ./docs/POS/api/schemas/Dish.adoc failed
+
+📄 Testing file: ./docs/POS/api/schemas/OrderResponse.adoc
+❌ FAILED: uninitialized constant Asciidoctor::Doctest
+❌ ./docs/POS/api/schemas/OrderResponse.adoc failed
+
+📄 Testing file: ./docs/POS/requirements/Menu/Menu.adoc
+❌ FAILED: uninitialized constant Asciidoctor::Doctest
+❌ ./docs/POS/requirements/Menu/Menu.adoc failed
+
+📄 Testing file: ./docs/shared/errors.adoc
+❌ FAILED: uninitialized constant Asciidoctor::Doctest
+❌ ./docs/shared/errors.adoc failed
+
+📄 Testing file: ./docs/shared/headers-auth.adoc
+❌ FAILED: uninitialized constant Asciidoctor::Doctest
+❌ ./docs/shared/headers-auth.adoc failed
+❌ Ошибка загрузки: cannot load such file -- asciidoctor/doctest
+Убедитесь, что гем asciidoctor-doctest установлен.
+❌ ./docs/04_architecture.adoc failed
+❌ Ошибка загрузки: cannot load such file -- asciidoctor/doctest
+Убедитесь, что гем asciidoctor-doctest установлен.
+❌ ./docs/POS/api/schemas/Dish.adoc failed
+❌ Ошибка загрузки: cannot load such file -- asciidoctor/doctest
+Убедитесь, что гем asciidoctor-doctest установлен.
+❌ ./docs/POS/api/schemas/OrderResponse.adoc failed
+❌ Ошибка загрузки: cannot load such file -- asciidoctor/doctest
+Убедитесь, что гем asciidoctor-doctest установлен.
+❌ ./docs/POS/requirements/Menu/Menu.adoc failed
+❌ Ошибка загрузки: cannot load such file -- asciidoctor/doctest
+Убедитесь, что гем asciidoctor-doctest установлен.
+❌ ./docs/shared/errors.adoc failed
+❌ Ошибка загрузки: cannot load such file -- asciidoctor/doctest
+Убедитесь, что гем asciidoctor-doctest установлен.
+❌ ./docs/shared/headers-auth.adoc failed
+❌ Ошибка загрузки: cannot load such file -- asciidoctor/doctest
+Убедитесь, что гем asciidoctor-doctest установлен.
+❌ ./docs/04_architecture.adoc failed
+❌ Ошибка загрузки: cannot load such file -- asciidoctor/doctest
+Убедитесь, что гем asciidoctor-doctest установлен.
+❌ ./docs/POS/api/schemas/Dish.adoc failed
+❌ Ошибка загрузки: cannot load such file -- asciidoctor/doctest
+Убедитесь, что гем asciidoctor-doctest установлен.
+❌ ./docs/POS/api/schemas/OrderResponse.adoc failed
+❌ Ошибка загрузки: cannot load such file -- asciidoctor/doctest
+Убедитесь, что гем asciidoctor-doctest установлен.
+❌ ./docs/POS/requirements/Menu/Menu.adoc failed
+❌ Ошибка загрузки: cannot load such file -- asciidoctor/doctest
+Убедитесь, что гем asciidoctor-doctest установлен.
+❌ ./docs/shared/errors.adoc failed
+❌ Ошибка загрузки: cannot load such file -- asciidoctor/doctest
+Убедитесь, что гем asciidoctor-doctest установлен.
+❌ ./docs/shared/headers-auth.adoc failed
+❌ Ошибка загрузки: cannot load such file -- asciidoctor/doctest
+Убедитесь, что гем asciidoctor-doctest установлен.
+❌ ./docs/04_architecture.adoc failed
+❌ Ошибка загрузки: cannot load such file -- asciidoctor/doctest
+Убедитесь, что гем asciidoctor-doctest установлен.
+❌ ./docs/POS/api/schemas/Dish.adoc failed
+❌ Ошибка загрузки: cannot load such file -- asciidoctor/doctest
+Убедитесь, что гем asciidoctor-doctest установлен.
+❌ ./docs/POS/api/schemas/OrderResponse.adoc failed
+❌ Ошибка загрузки: cannot load such file -- asciidoctor/doctest
+Убедитесь, что гем asciidoctor-doctest установлен.
+❌ ./docs/POS/requirements/Menu/Menu.adoc failed
+❌ Ошибка загрузки: cannot load such file -- asciidoctor/doctest
+Убедитесь, что гем asciidoctor-doctest установлен.
+❌ ./docs/shared/errors.adoc failed
+❌ Ошибка загрузки: cannot load such file -- asciidoctor/doctest
+Убедитесь, что гем asciidoctor-doctest установлен.
+❌ ./docs/shared/headers-auth.adoc failed
