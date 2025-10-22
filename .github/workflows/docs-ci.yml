@@ -14,10 +14,8 @@
 name: Docs-as-Code CI
 
 on:
-  push:
-    branches: [ main ]
   pull_request:
-    branches: [ main ]
+    branches: [ "main" ]  # Проверяем только PR в main
 
 jobs:
   lint-docs:
