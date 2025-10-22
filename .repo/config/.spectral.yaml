@@ -8,14 +8,3 @@ rules:
   operation-operationId: warn
   operation-tags: warn
   oas3-api-servers: warn
-
-ignoreFiles:
-  - .github/**
-  - .git/**
-  - node_modules/**
-  - artifacts/**
-  - scripts/**
-  - .vale/**
-  - "*.log"
-  - "*.ini"
-  - Dockerfile

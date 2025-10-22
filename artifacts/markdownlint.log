@@ -1,12 +1,13 @@
 markdownlint-cli2 v0.18.1 (markdownlint v0.38.0)
-Finding: **/*.md !node_modules !.git !.github !artifacts !scripts !.vale false docs/**/*.md !.git/** !.github/** !artifacts/** !scripts/** !.vale/** !**/*.yml !**/*.yaml !Dockerfile !**/*.json !**/*.jsonc !**/*.ini
-Linting: 11 file(s)
-Summary: 8 error(s)
-docs/05_bad_doc.md:5:121 MD013/line-length Line length [Expected: 120; Actual: 169]
-docs/05_bad_doc.md:9:1 MD004/ul-style Unordered list style [Expected: dash; Actual: asterisk]
-docs/06_bad_doc.md:4:4 MD009/no-trailing-spaces Trailing spaces [Expected: 0 or 2; Actual: 1]
-docs/06_bad_doc.md:12:1 MD004/ul-style Unordered list style [Expected: dash; Actual: asterisk]
+Finding: docs/POS/accesses.md docs/POS/api/schemas/errors/error400.md docs/POS/api/schemas/errors/error401.md docs/POS/api/schemas/errors/error402.md docs/POS/README.md docs/POS/shared/glossary.md docs/testcases/01_bad_markdown.md docs/testcases/04_style_violations.md README.md false docs/**/*.md !.git/** !.github/** !artifacts/** !scripts/** !.vale/** !**/*.yml !**/*.yaml !Dockerfile !**/*.json !**/*.jsonc !**/*.ini
+Linting: 9 file(s)
+Summary: 9 error(s)
 docs/POS/README.md:9 MD040/fenced-code-language Fenced code blocks should have a language specified [Context: "```"]
 docs/POS/README.md:50 MD036/no-emphasis-as-heading Emphasis used instead of a heading [Context: "Документация обновлена: 2025-1..."]
+docs/testcases/01_bad_markdown.md:2 MD032/blanks-around-lists Lists should be surrounded by blank lines [Context: "- list without blank lines"]
+docs/testcases/01_bad_markdown.md:2 MD032/blanks-around-lists Lists should be surrounded by blank lines [Context: "- list without blank lines"]
+docs/testcases/01_bad_markdown.md:3:1 MD004/ul-style Unordered list style [Expected: dash; Actual: asterisk]
+docs/testcases/01_bad_markdown.md:3 MD032/blanks-around-lists Lists should be surrounded by blank lines [Context: "* inconsistent list style"]
+docs/testcases/01_bad_markdown.md:3 MD032/blanks-around-lists Lists should be surrounded by blank lines [Context: "* inconsistent list style"]
 README.md:15 MD022/blanks-around-headings Headings should be surrounded by blank lines [Expected: 1; Actual: 0; Below] [Context: "### 🔹 Для локальной проверки"]
 README.md:16 MD031/blanks-around-fences Fenced code blocks should be surrounded by blank lines [Context: "```bash"]

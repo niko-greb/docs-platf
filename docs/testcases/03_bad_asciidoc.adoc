@@ -1,0 +1,19 @@
+Bad AsciiDoc Test
+
+= Bad Test
+
+include::non-existent-file.adoc[]
+This is a test.
+
+[source,json]
+----
+{
+  "this block is never closed"
+// <-- нет ----
+
+But here is more text after the unclosed block.
+This should cause a parsing error.
+
+Bad Test
+
+link:https://example.com[Unclosed link
