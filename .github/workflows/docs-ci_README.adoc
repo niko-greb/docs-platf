@@ -87,3 +87,47 @@ CI запускается при каждом Pull Request и push в `main`.
 ✅ Автоматическая публикация результатов в PR  
 ✅ Гибкость и расширяемость  
 ✅ Совместимость с Docker и локальной разработкой
+
+
+== ⚙️Тест диаграм
+
+[plantuml, docker-structure, png]
+----
+@startuml
+skinparam linetype ortho
+skinparam shadowing false
+
+node "📦 docs-cli:ci" {
+  [Python 3.11] as py
+  [Ruby 3.3] as rb
+  [Node.js] as node
+  [Vale] as vale
+}
+
+py -[hidden]-> node
+node -[hidden]-> rb
+rb -[hidden]-> vale
+
+rectangle "🔧 Утилиты" {
+  [markdownlint-cli2]
+  [mdformat]
+  [asciidoctor]
+  [spectral-cli]
+  [rubocop]
+  [vale]
+}
+
+rectangle "📁 Конфигурация" {
+  [.repo/config/.vale.ini]
+  [.repo/config/.spectral.yaml]
+  [.repo/config/.markdownlint-cli2.jsonc]
+  [.repo/config/.vale/styles/]
+}
+
+rectangle "🧠 Скрипты CI" {
+  [.repo/ci/scripts/run-linters.sh]
+  [.repo/ci/scripts/run_doctest.rb]
+}
+
+vale --> "Vale Styles"
+@enduml
