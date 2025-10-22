@@ -131,3 +131,4 @@ rectangle "🧠 Скрипты CI" {
 
 vale --> "Vale Styles"
 @enduml
+----
