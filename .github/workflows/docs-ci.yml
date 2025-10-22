@@ -18,10 +18,7 @@ on:
   pull_request:
     branches: [ main ]
 
-# 🔐 Обязательные разрешения для комментирования в PR
-permissions:
-  contents: read
-  pull-requests: write  # ← необходимо для marocchino/sticky-pull-request-comment
+
 
 jobs:
   docs-validate:
