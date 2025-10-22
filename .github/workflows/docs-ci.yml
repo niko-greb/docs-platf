@@ -125,6 +125,33 @@ jobs:
           read_log artifacts/vale.log >> "$GITHUB_OUTPUT"
           echo "EOF" >> "$GITHUB_OUTPUT"
 
+      - name: Read lint logs
+        id: read_logs
+        run: |
+          echo "Reading markdownlint..."
+          md_block="$(read_log artifacts/markdownlint.log 200)"
+          echo "markdownlint<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$md_block" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+          echo "Reading openapi..."
+          openapi_block="$(read_log artifacts/openapi.log 200)"
+          echo "openapi<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$openapi_block" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+          echo "Reading vale..."
+          vale_block="$(read_log artifacts/vale.log 200)"
+          echo "vale<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$vale_block" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+          echo "Reading asciidoc..."
+          adoc_block="$(read_log artifacts/asciidoc.log 200)"
+          echo "asciidoc<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$adoc_block" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"          
+
       # ─────────────────────────────────────────────
       # 7️⃣ Комментарий в Pull Request
       # ─────────────────────────────────────────────
@@ -145,6 +172,11 @@ jobs:
 
             ### 🔍 OpenAPI (Spectral)
             ${{ steps.read_logs.outputs.openapi }}
+
+            **AsciiDoc**
+            ```text
+            ${{ steps.read_logs.outputs.asciidoc }}
+
 
             ### ✍️ Vale Style Checker
             ${{ steps.read_logs.outputs.vale }}

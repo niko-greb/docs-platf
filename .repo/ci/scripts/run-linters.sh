@@ -55,6 +55,9 @@ for f in "${FILES[@]}"; do
   esac
 done
 
+# Убираем дубликаты (чтобы линтеры не запускались дважды на одних и тех же файлах)
+mapfile -t GOOD_FILES < <(printf "%s\n" "${GOOD_FILES[@]}" | sort -u)
+
 if [ ${#GOOD_FILES[@]} -eq 0 ]; then
   echo "ℹ️ No relevant documentation files to lint. Exiting."
   exit 0
@@ -159,13 +162,32 @@ echo ""
 # ===================================================================
 # 6️⃣ GitHub Annotations
 # ===================================================================
-echo "📋 Generating GitHub Annotations..."
+echo "📋 Generating GitHub annotations..."
 for log in artifacts/*.log; do
+  [ -f "$log" ] || continue
   [ -s "$log" ] || continue
-  grep -hE "^[^[:space:]]+:[0-9]+" "$log" || true | while IFS= read -r line; do
-    file=$(echo "$line" | cut -d: -f1)
-    ln=$(echo "$line" | cut -d: -f2)
-    msg=$(echo "$line" | cut -d: -f3- | sed 's/"/\\"/g')
+
+  # Ищем обычные ошибки (file:line:msg) и asciidoctor (file: line N: msg)
+  grep -hE "^[^[:space:]]+:[0-9]+:" "$log" || \
+  grep -hE "^[^[:space:]]+.*line[[:space:]]+[0-9]+:" "$log" || true | while IFS= read -r line; do
+    file=""
+    ln=""
+    msg=""
+
+    # Обработка формата Asciidoctor: "asciidoctor: ERROR: docs/file.adoc: line 3: message"
+    if [[ "$line" =~ ([^:]+\.adoc):[[:space:]]*line[[:space:]]*([0-9]+):(.*) ]]; then
+      file="${BASH_REMATCH[1]}"
+      ln="${BASH_REMATCH[2]}"
+      msg="${BASH_REMATCH[3]}"
+    # Обычный формат file:line:msg
+    elif [[ "$line" =~ ^([^:]+):([0-9]+):(.*)$ ]]; then
+      file="${BASH_REMATCH[1]}"
+      ln="${BASH_REMATCH[2]}"
+      msg="${BASH_REMATCH[3]}"
+    fi
+
+    msg=$(echo "$msg" | sed 's/"/\\"/g')
+
     if echo "$msg" | grep -qi "error"; then
       echo "::error file=${file},line=${ln}::${msg}"
       exit_code=1
@@ -174,7 +196,6 @@ for log in artifacts/*.log; do
     fi
   done
 done
-echo ""
 
 # ===================================================================
 # 7️⃣ Итог
