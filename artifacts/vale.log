@@ -1,3 +1,8 @@
-docs/testcases/01_bad_markdown.md:4:13:Vale.Spelling:Did you really mean 'html'?
+docs/testcases/01_bad_markdown.md:7:13:Vale.Spelling:Did you really mean 'html'?
 docs/testcases/04_style_violations.md:1:1:Russian.terms:Используйте 'docs-as-code' вместо 'Документация как код'
-docs/testcases/04_style_violations.md:3:15:Russian.terms:Используйте 'dev' вместо 'дев'
+docs/testcases/04_style_violations.md:4:3:Russian.terms:Используйте 'docs-as-code' вместо 'Документация как код'
+docs/testcases/04_style_violations.md:6:35:Russian.terms:Используйте 'dev' вместо 'дев'
+docs/testcases/01_bad_markdown.md:7:13:Vale.Spelling:Did you really mean 'html'?
+docs/testcases/04_style_violations.md:1:1:Russian.terms:Используйте 'docs-as-code' вместо 'Документация как код'
+docs/testcases/04_style_violations.md:4:3:Russian.terms:Используйте 'docs-as-code' вместо 'Документация как код'
+docs/testcases/04_style_violations.md:6:35:Russian.terms:Используйте 'dev' вместо 'дев'

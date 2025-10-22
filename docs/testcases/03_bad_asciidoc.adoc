@@ -17,3 +17,6 @@ This should cause a parsing error.
 Bad Test
 
 link:https://example.com[Unclosed link
+= Unclosed Macro Test
+
+https://example.com[Link without closing bracket
