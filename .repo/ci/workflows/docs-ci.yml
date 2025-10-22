@@ -2,9 +2,9 @@ name: 🧱 Docs-as-Code CI
 
 on:
   push:
-    branches: ['**']
+    branches: [ main ]
   pull_request:
-    branches: ['**']
+    branches: [ main ]
 
 permissions:
   contents: read
@@ -14,32 +14,32 @@ jobs:
   docs-validate:
     name: 🧩 Validate Documentation
     runs-on: ubuntu-latest
+
+    # 💡 Автоматический режим:
+    #   - PR → мягкий (continue-on-error: true)
+    #   - main → строгий (false)
     continue-on-error: ${{ github.event_name == 'pull_request' }}
 
     steps:
-     
       # ─────────────────────────────────────────────
-      #  Пре-коммит (НАПОДУМАТЬ)
-      # ─────────────────────────────────────────────
-      # - name: 🔍 Validate pre-commit hooks
-      #   run: |
-      #     pip install pre-commit
-      #     pre-commit run --all-files --show-diff-on-failure
-
-
-      # ─────────────────────────────────────────────
-      # 1️⃣ Инициализация
+      # 1️⃣ Клонируем репозиторий
       # ─────────────────────────────────────────────
       - name: 🧭 Checkout repository
         uses: actions/checkout@v4
 
-      - name: 🧰 Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      # ─────────────────────────────────────────────
+      # 2️⃣ Проверяем Docker доступность
+      # ─────────────────────────────────────────────
+      - name: 🐋 Check Docker availability
+        run: |
+          echo "Checking Docker..."
+          docker version
+          docker info | head -n 20
 
       # ─────────────────────────────────────────────
-      # 2️⃣ Сборка контейнера с CLI
+      # 3️⃣ Сборка Docker-образа
       # ─────────────────────────────────────────────
-      - name: 🏗️ Build docs-cli image
+      - name: 🏗️ Build Docs-as-Code image
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -49,16 +49,16 @@ jobs:
           tags: docs-cli:ci
 
       # ─────────────────────────────────────────────
-      # 3️⃣ Запуск линтеров в контейнере
+      # 4️⃣ Запуск линтеров (в Docker)
       # ─────────────────────────────────────────────
       - name: 🚀 Run Docs-as-Code Validation
         run: |
-          echo "🔧 Starting Docs-as-Code Validation..."
+          echo "🔧 Running linters inside container..."
           docker run --rm -v "$PWD":/work -w /work docs-cli:ci \
             bash .repo/ci/scripts/run-linters.sh
 
       # ─────────────────────────────────────────────
-      # 4️⃣ Сохраняем артефакты
+      # 5️⃣ Публикуем артефакты (логи)
       # ─────────────────────────────────────────────
       - name: 📎 Upload Linter Reports
         if: always()
@@ -68,48 +68,9 @@ jobs:
           path: artifacts/
 
       # ─────────────────────────────────────────────
-      # 5️⃣ Фильтр изменённых файлов
+      # 6️⃣ Читаем логи для краткого отчёта
       # ─────────────────────────────────────────────
-      - name: 🎨 Annotate PR (only changed files)
-        if: github.event_name == 'pull_request'
-        shell: bash
-        run: |
-          echo "🧠 Gathering changed files in PR..."
-          git fetch origin ${{ github.event.pull_request.base.ref }} --depth=1
-          git diff --name-only origin/${{ github.event.pull_request.base.ref }} HEAD > changed_files.txt
-
-          echo "📄 Changed files:"
-          cat changed_files.txt || echo "⚠️ No changes detected."
-
-          echo "🧩 Parsing linter logs for annotations..."
-          for log in artifacts/*.log; do
-            [ -f "$log" ] || continue
-            echo "Processing $log..."
-            while IFS= read -r line; do
-              if [[ "$line" =~ ^([^:]+):([0-9]+):[[:space:]]*(.*)$ ]]; then
-                file="${BASH_REMATCH[1]}"
-                line_number="${BASH_REMATCH[2]}"
-                message="${BASH_REMATCH[3]}"
-                # Пропускаем файлы, не входящие в изменённые
-                if ! grep -qx "$file" changed_files.txt 2>/dev/null; then
-                  continue
-                fi
-                # Определяем тип (warning/error)
-                if echo "$message" | grep -qiE "error|failed|missing"; then
-                  echo "::error file=${file},line=${line_number}::${message}"
-                else
-                  echo "::warning file=${file},line=${line_number}::${message}"
-                fi
-              fi
-            done < "$log"
-          done
-
-          echo "✅ Annotation completed for changed files only."
-
-      # ─────────────────────────────────────────────
-      # 6️⃣ Читаем trimmed логи
-      # ─────────────────────────────────────────────
-      - name: 🔎 Read linter logs into step outputs
+      - name: 🔎 Prepare summary logs
         id: read_logs
         shell: bash
         run: |
@@ -117,67 +78,51 @@ jobs:
 
           read_log() {
             local file="$1"
-            local max_lines="${2:-200}"
+            local lines="${2:-150}"
             if [ -f "$file" ] && [ -s "$file" ]; then
-              head -n "$max_lines" "$file" \
-                | sed -e 's/`/\\`/g' -e 's/\r$//' \
-                > /tmp/trimmed.log
-              echo "-----BEGIN_LOG-----"
-              cat /tmp/trimmed.log
-              echo "-----END_LOG-----"
+              echo '```text'
+              head -n "$lines" "$file"
+              echo '```'
             else
-              echo "No file: $file or file empty"
+              echo "_No data in $file_"
             fi
           }
 
-          echo "Reading markdownlint..."
-          md_block="$(read_log artifacts/markdownlint.log 200)"
           echo "markdown<<EOF" >> "$GITHUB_OUTPUT"
-          echo "$md_block" >> "$GITHUB_OUTPUT"
+          read_log artifacts/markdownlint.log >> "$GITHUB_OUTPUT"
           echo "EOF" >> "$GITHUB_OUTPUT"
 
-          echo "Reading openapi..."
-          openapi_block="$(read_log artifacts/openapi.log 200)"
           echo "openapi<<EOF" >> "$GITHUB_OUTPUT"
-          echo "$openapi_block" >> "$GITHUB_OUTPUT"
+          read_log artifacts/openapi.log >> "$GITHUB_OUTPUT"
           echo "EOF" >> "$GITHUB_OUTPUT"
 
-          echo "Reading vale..."
-          vale_block="$(read_log artifacts/vale.log 200)"
           echo "vale<<EOF" >> "$GITHUB_OUTPUT"
-          echo "$vale_block" >> "$GITHUB_OUTPUT"
+          read_log artifacts/vale.log >> "$GITHUB_OUTPUT"
           echo "EOF" >> "$GITHUB_OUTPUT"
 
       # ─────────────────────────────────────────────
-      # 7️⃣ Автоматический комментарий в PR
+      # 7️⃣ Комментарий в Pull Request
       # ─────────────────────────────────────────────
-      - name: 💬 Comment Summary in PR
+      - name: 💬 Comment summary in PR
         if: github.event_name == 'pull_request'
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           header: "🧾 Docs-as-Code CI Report"
           message: |
-            ## 🧱 **Docs-as-Code CI Summary**
-            **Mode:** ${{ github.event_name == 'pull_request' && '🩶 Soft (non-blocking)' || '🔥 Strict (blocking)' }}
+            🧱 **Docs-as-Code CI completed**
+            > Mode: ${{ github.event_name == 'pull_request' && '🩶 Soft (non-blocking)' || '🔴 Strict (blocking)' }}
 
-            ✅ **Markdown**, 🏗️ **AsciiDoc**, 🔍 **OpenAPI**, ✍️ **Vale** — checked.
+            ✅ Markdown, AsciiDoc, OpenAPI, Vale — checked.
 
             ---
-            ### 📋 Quick Summary (first 200 lines)
-            **🧾 Markdownlint**
-            ```diff
+            ### 🧾 Markdownlint
             ${{ steps.read_logs.outputs.markdown }}
-            ```
 
-            **🔍 OpenAPI (Spectral)**
-            ```diff
+            ### 🔍 OpenAPI (Spectral)
             ${{ steps.read_logs.outputs.openapi }}
-            ```
 
-            **✍️ Vale**
-            ```diff
+            ### ✍️ Vale Style Checker
             ${{ steps.read_logs.outputs.vale }}
-            ```
 
             ---
-            📦 _Full reports available in build artifacts (docs-quality-report)_.
+            🧩 Detailed reports are available in attached CI artifacts.
