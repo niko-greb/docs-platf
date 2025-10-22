@@ -1,0 +1,128 @@
+name: 🧱 Docs-as-Code CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  docs-validate:
+    name: 🧩 Validate Documentation
+    runs-on: ubuntu-latest
+
+    # 💡 Автоматический режим:
+    #   - PR → мягкий (continue-on-error: true)
+    #   - main → строгий (false)
+    continue-on-error: ${{ github.event_name == 'pull_request' }}
+
+    steps:
+      # ─────────────────────────────────────────────
+      # 1️⃣ Клонируем репозиторий
+      # ─────────────────────────────────────────────
+      - name: 🧭 Checkout repository
+        uses: actions/checkout@v4
+
+      # ─────────────────────────────────────────────
+      # 2️⃣ Проверяем Docker доступность
+      # ─────────────────────────────────────────────
+      - name: 🐋 Check Docker availability
+        run: |
+          echo "Checking Docker..."
+          docker version
+          docker info | head -n 20
+
+      # ─────────────────────────────────────────────
+      # 3️⃣ Сборка Docker-образа
+      # ─────────────────────────────────────────────
+      - name: 🏗️ Build Docs-as-Code image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: .repo/Dockerfile
+          push: false
+          load: true
+          tags: docs-cli:ci
+
+      # ─────────────────────────────────────────────
+      # 4️⃣ Запуск линтеров (в Docker)
+      # ─────────────────────────────────────────────
+      - name: 🚀 Run Docs-as-Code Validation
+        run: |
+          echo "🔧 Running linters inside container..."
+          docker run --rm -v "$PWD":/work -w /work docs-cli:ci \
+            bash .repo/ci/scripts/run-linters.sh
+
+      # ─────────────────────────────────────────────
+      # 5️⃣ Публикуем артефакты (логи)
+      # ─────────────────────────────────────────────
+      - name: 📎 Upload Linter Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs-quality-report
+          path: artifacts/
+
+      # ─────────────────────────────────────────────
+      # 6️⃣ Читаем логи для краткого отчёта
+      # ─────────────────────────────────────────────
+      - name: 🔎 Prepare summary logs
+        id: read_logs
+        shell: bash
+        run: |
+          mkdir -p artifacts
+
+          read_log() {
+            local file="$1"
+            local lines="${2:-150}"
+            if [ -f "$file" ] && [ -s "$file" ]; then
+              echo '```text'
+              head -n "$lines" "$file"
+              echo '```'
+            else
+              echo "_No data in $file_"
+            fi
+          }
+
+          echo "markdown<<EOF" >> "$GITHUB_OUTPUT"
+          read_log artifacts/markdownlint.log >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+          echo "openapi<<EOF" >> "$GITHUB_OUTPUT"
+          read_log artifacts/openapi.log >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+          echo "vale<<EOF" >> "$GITHUB_OUTPUT"
+          read_log artifacts/vale.log >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+      # ─────────────────────────────────────────────
+      # 7️⃣ Комментарий в Pull Request
+      # ─────────────────────────────────────────────
+      - name: 💬 Comment summary in PR
+        if: github.event_name == 'pull_request'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: "🧾 Docs-as-Code CI Report"
+          message: |
+            🧱 **Docs-as-Code CI completed**
+            > Mode: ${{ github.event_name == 'pull_request' && '🩶 Soft (non-blocking)' || '🔴 Strict (blocking)' }}
+
+            ✅ Markdown, AsciiDoc, OpenAPI, Vale — checked.
+
+            ---
+            ### 🧾 Markdownlint
+            ${{ steps.read_logs.outputs.markdown }}
+
+            ### 🔍 OpenAPI (Spectral)
+            ${{ steps.read_logs.outputs.openapi }}
+
+            ### ✍️ Vale Style Checker
+            ${{ steps.read_logs.outputs.vale }}
+
+            ---
+            🧩 Detailed reports are available in attached CI artifacts.
