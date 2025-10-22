@@ -49,13 +49,38 @@ jobs:
           tags: docs-cli:ci
 
       # ─────────────────────────────────────────────
-      # 4️⃣ Запуск линтеров (в Docker)
+      #  Определяем изменённые файлы
       # ─────────────────────────────────────────────
-      - name: 🚀 Run Docs-as-Code Validation
+      - name: 🧮 Detect changed files
+        id: changes
+        shell: bash
         run: |
-          echo "🔧 Running linters inside container..."
+          echo "🔍 Collecting changed files..."
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            git fetch origin main --depth=1
+            CHANGED=$(git diff --name-only origin/main...HEAD | grep -E '\.(md|adoc|ya?ml)$' || true)
+          else
+            CHANGED=$(git ls-files | grep -E '\.(md|adoc|ya?ml)$' || true)
+          fi
+
+          echo "Changed files:"
+          echo "$CHANGED"
+
+          echo "files<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGED" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+
+      # ─────────────────────────────────────────────
+      # 4️⃣ Запускаем валидатор только по изменённым файлам
+      # ─────────────────────────────────────────────
+      - name: 🚀 Run Docs-as-Code Validation (changed files only)
+        if: steps.changes.outputs.files != ''
+        run: |
+          echo "🧩 Running linters only for changed files..."
           docker run --rm -v "$PWD":/work -w /work docs-cli:ci \
-            bash .repo/ci/scripts/run-linters.sh
+            bash -lc "./.repo/ci/scripts/run-linters.sh ${{ steps.changes.outputs.files }}"
+
 
       # ─────────────────────────────────────────────
       # 5️⃣ Публикуем артефакты (логи)

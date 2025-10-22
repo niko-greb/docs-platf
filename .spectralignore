@@ -1,0 +1,9 @@
+.github/**
+.git/**
+node_modules/**
+artifacts/**
+scripts/**
+.vale/**
+*.log
+*.ini
+Dockerfile

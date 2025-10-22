@@ -1,0 +1,12 @@
+openapi: "3.0.0"
+info:
+  title: Broken API Example
+  version: "1.0"
+paths:
+  /orders:
+    get:
+      summary: "Get orders"
+      # missing operationId, description, tags
+      responses:
+        "200":
+          description: "ok"
