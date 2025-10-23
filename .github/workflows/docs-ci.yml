@@ -1,69 +1,93 @@
-name: 🧱 Docs-as-Code CI + GitHub Pages
+# ==============================================================
+# 📘 Docs-as-Code CI
+# Автоматическая проверка документации при push в main и в PR в main.
+#
+# Особенности:
+# - Проверяет ТОЛЬКО документационные файлы: .md, .adoc, .yaml, .yml
+# - Использует контейнер docs-cli:ci для изолированной среды
+# - В PR — работает в soft mode (не ломает CI), но публикует отчёт
+# - В push в main — должен ломать CI при ошибках (если SOFT_MODE=false в скрипте)
+# - Публикует логи как артефакты и комментарий в PR
+# ==============================================================
+
+name: 🧱 Docs-as-Code CI
 
 on:
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
-  workflow_dispatch:
 
-permissions:
-  contents: write
-  pages: write
-  id-token: write
+
 
 jobs:
-  docs-ci:
-    name: 🧩 Validate & Publish Documentation
+  docs-validate:
+    name: 🧩 Validate Documentation
     runs-on: ubuntu-latest
+    # В PR допускаем "успех" даже при ошибках (soft mode),
+    # но в push — CI должен падать (предполагается, что run-linters.sh
+    # управляет exit code в зависимости от SOFT_MODE).
     continue-on-error: ${{ github.event_name == 'pull_request' }}
 
     steps:
       # ─────────────────────────────────────────────
-      # 1️⃣ Клонируем репозиторий (с историей)
+      # 1️⃣ Клонируем репозиторий с полной историей
       # ─────────────────────────────────────────────
       - name: 🧭 Checkout repository
         uses: actions/checkout@v4
         with:
+          # fetch-depth: 0 — чтобы работало origin/main...HEAD в PR
+          # (альтернатива: fetch-depth: 2 + явный fetch origin/main)
           fetch-depth: 0
 
       # ─────────────────────────────────────────────
-      # 2️⃣ Собираем Docker окружение для линтеров
+      # 2️⃣ Собираем Docker-образ с линтерами
       # ─────────────────────────────────────────────
-      - name: 🧰 Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
       - name: 🏗️ Build docs-cli image
         uses: docker/build-push-action@v6
         with:
           context: .
           file: .repo/Dockerfile
-          push: false
-          load: true
+          load: true   # загружаем образ в локальный docker
           tags: docs-cli:ci
+          push: false  # не пушим в registry
 
       # ─────────────────────────────────────────────
-      # 3️⃣ Запускаем линтеры (только по изменённым файлам)
+      # 3️⃣ Запуск валидации только для релевантных файлов
       # ─────────────────────────────────────────────
       - name: 🚀 Run Docs-as-Code Validation
-        id: lint
+        id: run_linters
         run: |
-          echo "🔍 Detecting changed files..."
+          echo "🔍 Determining changed documentation files..."
+
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "📦 Mode: Pull Request → comparing with origin/main"
+            # Используем трёхточечный diff для PR
             CHANGED_FILES=$(git diff --name-only origin/main...HEAD | grep -E '\.(md|adoc|ya?ml)$' || true)
           else
+            echo "📦 Mode: Push → checking files in current commit"
+            # Для push — только файлы в коммите
             CHANGED_FILES=$(git diff-tree --no-commit-id --name-only -r ${{ github.sha }} | grep -E '\.(md|adoc|ya?ml)$' || true)
           fi
-          echo "$CHANGED_FILES"
+
+          echo "📄 Changed docs files:"
           if [ -z "$CHANGED_FILES" ]; then
-            echo "✅ No doc changes."
+            echo "  (none)"
+            echo "✅ No documentation files to validate."
             exit 0
+          else
+            echo "$CHANGED_FILES" | sed 's/^/  - /'
           fi
-          docker run --rm -v "$PWD":/work -w /work -e CHANGED_FILES="$CHANGED_FILES" docs-cli:ci \
-            bash .repo/ci/scripts/run-linters.sh
+
+          # Передаём список файлов через переменную окружения
+          docker run --rm \
+            -v "$PWD":/work \
+            -w /work \
+            -e CHANGED_FILES="$CHANGED_FILES" \
+            docs-cli:ci bash .repo/ci/scripts/run-linters.sh
 
       # ─────────────────────────────────────────────
-      # 4️⃣ Публикуем отчёты линтеров
+      # 4️⃣ Сохраняем логи как артефакты (всегда)
       # ─────────────────────────────────────────────
       - name: 📎 Upload Linter Reports
         if: always()
@@ -71,23 +95,73 @@ jobs:
         with:
           name: docs-quality-report
           path: artifacts/
+          retention-days: 7
 
       # ─────────────────────────────────────────────
-      # 5️⃣ Комментарий в PR с результатами
+      # 5️⃣ Генерация краткого отчёта для комментария PR
       # ─────────────────────────────────────────────
-      - name: 💬 Post summary comment to PR
+      - name: 🧾 Generate PR comment summary
+        if: github.event_name == 'pull_request'
+        run: |
+          summarize() {
+            local file="$1"
+            local title="$2"
+            echo "**${title}**"
+            if [[ -f "$file" && -s "$file" ]]; then
+              echo '```text'
+              head -n 50 "$file"
+              echo '```'
+            else
+              echo "_No issues detected_"
+            fi
+            echo ""
+          }
+
+          {
+            echo "## 🧩 Docs-as-Code CI Results"
+            echo ""
+            echo "> ℹ️ This report shows linting results for changed documentation files."
+            echo ""
+            summarize artifacts/markdownlint.log "Markdown (markdownlint)"
+            summarize artifacts/asciidoc.log "AsciiDoc (asciidoctor)"
+            summarize artifacts/openapi.log "OpenAPI (Spectral)"
+            summarize artifacts/vale.log "Style & Terminology (Vale)"
+          } > summary.md
+
+      # ─────────────────────────────────────────────
+      # 6️⃣ Публикация комментария в PR (только для PR!)
+      # ─────────────────────────────────────────────
+      - name: 💬 Post comment to Pull Request
         if: github.event_name == 'pull_request'
         uses: marocchino/sticky-pull-request-comment@v2
         with:
+          # Уникальный заголовок для обновления существующего комментария
           header: docs-lint
+          # Читаем содержимое файла и передаём напрямую в message
           message: |
-            🧩 Docs-as-Code CI Results
-            (see attached summary below)
-          path: summary.md
-          append: false
-          recreate: true
-          delete: false
-          hide_classify: OUTDATED
+            ${{ steps.read_summary.outputs.content }}
+        env:
+          # Убеждаемся, что файл существует
+          SUMMARY_PATH: summary.md
+
+      # ─────────────────────────────────────────────
+      # 7️⃣ Вспомогательный шаг: читаем summary.md в output
+      # ─────────────────────────────────────────────
+      - name: 🔍 Read summary content for PR comment
+        id: read_summary
+        if: github.event_name == 'pull_request'
+        run: |
+          if [ -f "summary.md" ]; then
+            # Многострочный output через heredoc-синтаксис
+            echo "content<<EOF" >> "$GITHUB_OUTPUT"
+            cat summary.md >> "$GITHUB_OUTPUT"
+            echo "EOF" >> "$GITHUB_OUTPUT"
+          else
+            echo "content=⚠️ Failed to generate summary." >> "$GITHUB_OUTPUT"
+          fi
+
+          # ─────────────────────────────────────────────
+      
 
 
       # ─────────────────────────────────────────────
