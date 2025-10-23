@@ -1,0 +1,17 @@
+markdownlint-cli2 v0.18.1 (markdownlint v0.38.0)
+Finding: README.md docs/MP/README.md docs/MP/accesses.md docs/MP/api/schemas/errors/error400.md docs/MP/api/schemas/errors/error401.md docs/MP/api/schemas/errors/error402.md docs/MP/shared/glossary.md docs/POS/README.md docs/POS/accesses.md docs/POS/api/schemas/errors/error400.md docs/POS/api/schemas/errors/error401.md docs/POS/api/schemas/errors/error402.md docs/POS/shared/glossary.md docs/testcases/01_bad_markdown.md docs/testcases/04_style_violations.md false docs/**/*.md !.git/** !.github/** !artifacts/** !scripts/** !.vale/** !**/*.yml !**/*.yaml !Dockerfile !**/*.json !**/*.jsonc !**/*.ini
+Linting: 15 file(s)
+Summary: 13 error(s)
+docs/MP/README.md:9 MD040/fenced-code-language Fenced code blocks should have a language specified [Context: "```"]
+docs/MP/README.md:51 MD036/no-emphasis-as-heading Emphasis used instead of a heading [Context: "Документация обновлена: 2025-1..."]
+docs/POS/README.md:9 MD040/fenced-code-language Fenced code blocks should have a language specified [Context: "```"]
+docs/POS/README.md:50 MD036/no-emphasis-as-heading Emphasis used instead of a heading [Context: "Документация обновлена: 2025-1..."]
+docs/testcases/01_bad_markdown.md:3 MD012/no-multiple-blanks Multiple consecutive blank lines [Expected: 1; Actual: 2]
+docs/testcases/01_bad_markdown.md:5 MD032/blanks-around-lists Lists should be surrounded by blank lines [Context: "- list without blank lines"]
+docs/testcases/01_bad_markdown.md:5 MD032/blanks-around-lists Lists should be surrounded by blank lines [Context: "- list without blank lines"]
+docs/testcases/01_bad_markdown.md:6:1 MD004/ul-style Unordered list style [Expected: dash; Actual: asterisk]
+docs/testcases/01_bad_markdown.md:6 MD032/blanks-around-lists Lists should be surrounded by blank lines [Context: "* inconsistent list style"]
+docs/testcases/01_bad_markdown.md:6 MD032/blanks-around-lists Lists should be surrounded by blank lines [Context: "* inconsistent list style"]
+docs/testcases/04_style_violations.md:6:57 MD047/single-trailing-newline Files should end with a single newline character
+README.md:15 MD022/blanks-around-headings Headings should be surrounded by blank lines [Expected: 1; Actual: 0; Below] [Context: "### 🔹 Для локальной проверки"]
+README.md:16 MD031/blanks-around-fences Fenced code blocks should be surrounded by blank lines [Context: "```bash"]
