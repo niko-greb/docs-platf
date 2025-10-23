@@ -1,62 +1,57 @@
 # syntax=docker/dockerfile:1
-FROM python:3.11-slim
+FROM gradle:8.10-jdk17-slim
 
 LABEL maintainer="Docs-as-Code Team"
-LABEL purpose="Unified Docs Linter Environment"
+LABEL purpose="Docs CI & doctoolchain integration"
 
-ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /work
 
 # ─────────────────────────────────────────────
-# 1️⃣ Системные и языковые зависимости
+# 1️⃣ Устанавливаем системные зависимости
 # ─────────────────────────────────────────────
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    ruby-full nodejs npm wget jq git build-essential ruby-dev \
-    libxml2-dev libxslt-dev zlib1g-dev ca-certificates && \
-    rm -rf /var/lib/apt/lists/* && \
-    npm install -g markdownlint-cli2 @stoplight/spectral-cli && \
-    python3 -m pip install --upgrade pip setuptools wheel && \
-    pip install --break-system-packages --no-cache-dir mdformat && \
-    gem install --no-document asciidoctor rubocop
+    ruby-full nodejs npm python3 python3-pip git wget unzip imagemagick \
+    && rm -rf /var/lib/apt/lists/*
 
 # ─────────────────────────────────────────────
-# 2️⃣ Vale
+# 2️⃣ Node.js линтеры
 # ─────────────────────────────────────────────
-
-RUN wget -q https://github.com/errata-ai/vale/releases/download/v2.22.0/vale_2.22.0_Linux_64-bit.tar.gz -O /tmp/vale.tar.gz \
-    && mkdir -p /usr/local/bin/vale-bin \
-    && tar -xzf /tmp/vale.tar.gz -C /usr/local/bin/vale-bin \
-    && mv /usr/local/bin/vale-bin/vale /usr/local/bin/vale \
-    && rm -rf /tmp/vale.tar.gz /usr/local/bin/vale-bin
+RUN npm install -g markdownlint-cli2 @stoplight/spectral-cli
 
 # ─────────────────────────────────────────────
-# 3️⃣ Конфиги и скрипты
+# 3️⃣ Python форматтер
 # ─────────────────────────────────────────────
-COPY .repo/config/.vale.ini .repo/config/.spectral.yaml .repo/config/.markdownlint-cli2.jsonc /work/.repo/config/
-COPY .repo/config/.vale/styles /work/.repo/config/.vale/styles
-COPY .repo/ci/scripts/run_doctest.rb /work/.repo/ci/scripts/run_doctest.rb
+RUN pip3 install --no-cache-dir mdformat
 
 # ─────────────────────────────────────────────
-# 4️⃣ Настройка Vale
+# 4️⃣ Ruby — Asciidoctor
 # ─────────────────────────────────────────────
-RUN mkdir -p /work/.vale/styles && \
-    cp -r /work/.repo/config/.vale/styles/* /work/.vale/styles/ 2>/dev/null || true && \
-    vale sync || echo "⚠️ Vale styles not synced (offline mode)"
+RUN gem install --no-document asciidoctor
 
 # ─────────────────────────────────────────────
-# 5️⃣ Проверка утилит
+# 5️⃣ Vale — стиль и терминология
+# ─────────────────────────────────────────────
+ENV VALE_VERSION=v2.27.1
+RUN wget -q https://github.com/errata-ai/vale/releases/download/${VALE_VERSION}/vale_${VALE_VERSION}_Linux_64-bit.tar.gz -O /tmp/vale.tar.gz \
+    && tar -xzf /tmp/vale.tar.gz -C /usr/local/bin && rm /tmp/vale.tar.gz
+
+# ─────────────────────────────────────────────
+# 6️⃣ doctoolchain
+# ─────────────────────────────────────────────
+RUN mkdir -p /opt/doctoolchain && \
+    wget -q https://github.com/docToolchain/docToolchain/releases/download/v3.2.2/doctoolchain.zip -O /tmp/doctoolchain.zip && \
+    unzip -q /tmp/doctoolchain.zip -d /opt/doctoolchain && rm /tmp/doctoolchain.zip
+
+ENV PATH="/opt/doctoolchain/bin:${PATH}"
+
+# ─────────────────────────────────────────────
+# 7️⃣ Проверка установленных утилит
 # ─────────────────────────────────────────────
 RUN echo "✅ Installed tools:" && \
-    ruby -v && \
     asciidoctor --version && \
-    rubocop -v && \
-    python3 -m mdformat --version && \
     markdownlint-cli2 --version && \
     spectral --version && \
-    vale --version
+    vale --version && \
+    gradle --version
 
-# ─────────────────────────────────────────────
-# 6️⃣ Точка входа
-# ─────────────────────────────────────────────
 ENTRYPOINT ["/bin/bash", "-lc"]
-CMD ["echo 'Docs-as-Code CLI ready ✅' && bash"]
