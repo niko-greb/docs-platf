@@ -80,10 +80,15 @@ jobs:
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           header: docs-lint
+          message: |
+            🧩 Docs-as-Code CI Results
+            (see attached summary below)
           path: summary.md
           append: false
           recreate: true
+          delete: false
           hide_classify: OUTDATED
+
 
       # ─────────────────────────────────────────────
       # 6️⃣ Генерация HTML и публикация на GitHub Pages
