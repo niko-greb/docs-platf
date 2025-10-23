@@ -89,46 +89,37 @@ CI запускается при каждом Pull Request и push в `main`.
 ✅ Совместимость с Docker и локальной разработкой
 
 
-== ⚙️Тест диаграм
+== ⚙️Тест диаграммы (Mermaid)
 
-[plantuml, docker-structure, png]
+[mermaid]
 ----
-@startuml
-skinparam linetype ortho
-skinparam shadowing false
+graph TD
+    A[📦 docs-cli:ci] -->|включает| B[Python 3.11]
+    A --> C[Ruby 3.3]
+    A --> D[Node.js]
+    A --> E[Vale]
 
-node "📦 docs-cli:ci" {
-  [Python 3.11] as py
-  [Ruby 3.3] as rb
-  [Node.js] as node
-  [Vale] as vale
-}
+    subgraph Утилиты
+        F[markdownlint-cli2]
+        G[mdformat]
+        H[asciidoctor]
+        I[spectral-cli]
+        J[rubocop]
+        K[vale]
+    end
 
-py -[hidden]-> node
-node -[hidden]-> rb
-rb -[hidden]-> vale
+    subgraph Конфигурация
+        L[.repo/config/.vale.ini]
+        M[.repo/config/.spectral.yaml]
+        N[.repo/config/.markdownlint-cli2.jsonc]
+        O[.repo/config/.vale/styles/]
+    end
 
-rectangle "🔧 Утилиты" {
-  [markdownlint-cli2]
-  [mdformat]
-  [asciidoctor]
-  [spectral-cli]
-  [rubocop]
-  [vale]
-}
+    subgraph CI
+        P[.repo/ci/scripts/run-linters.sh]
+        Q[.repo/ci/scripts/run_doctest.rb]
+    end
 
-rectangle "📁 Конфигурация" {
-  [.repo/config/.vale.ini]
-  [.repo/config/.spectral.yaml]
-  [.repo/config/.markdownlint-cli2.jsonc]
-  [.repo/config/.vale/styles/]
-}
-
-rectangle "🧠 Скрипты CI" {
-  [.repo/ci/scripts/run-linters.sh]
-  [.repo/ci/scripts/run_doctest.rb]
-}
-
-vale --> "Vale Styles"
-@enduml
+    A --> F & G & H & I & J & K
+    K --> O
 ----
