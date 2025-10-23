@@ -218,3 +218,29 @@ if [ "${SOFT_MODE}" = true ]; then
 else
   exit "${exit_code}"
 fi
+
+
+# -----------------------
+# Doctoolchain: генерация диаграмм
+# -----------------------
+echo "🎨 Generating diagrams via doctoolchain..."
+if [ -d "docs/diagrams" ] || grep -R "@startuml" docs >/dev/null 2>&1; then
+  if command -v doctoolchain >/dev/null 2>&1; then
+    doctoolchain . generateDiagrams -PconfigFile=.repo/config/docToolchainConfig.groovy || echo "⚠️ Diagram generation failed"
+  else
+    echo "⚠️ doctoolchain not found (skip diagrams)"
+  fi
+else
+  echo "ℹ️ No diagrams to generate"
+fi
+echo ""
+
+# -----------------------
+# Оптимизация изображений
+# -----------------------
+echo "🪶 Optimizing images..."
+find docs -type f \( -name "*.png" -o -name "*.jpg" \) | while read -r img; do
+  echo "🔧 Compressing $img"
+  mogrify -strip -interlace Plane -sampling-factor 4:2:0 -quality 85 "$img"
+done
+echo ""

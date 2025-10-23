@@ -1,5 +1,1 @@
-# AsciiDoc Validation Log (20251022T162207Z)
-asciidoctor: ERROR: 03_bad_asciidoc.adoc: line 3: level 0 sections can only be used when doctype is book
-asciidoctor: ERROR: 03_bad_asciidoc.adoc: line 5: include file not found: /work/docs/testcases/non-existent-file.adoc
-asciidoctor: ERROR: 03_bad_asciidoc.adoc: line 3: level 0 sections can only be used when doctype is book
-asciidoctor: ERROR: 03_bad_asciidoc.adoc: line 5: include file not found: /work/docs/testcases/non-existent-file.adoc
+# AsciiDoc Validation Log

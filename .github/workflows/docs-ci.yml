@@ -1,32 +1,32 @@
-name: 🧱 Docs-as-Code CI
+name: 🧱 Docs-as-Code CI + GitHub Pages
 
 on:
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  workflow_dispatch:
 
-# permissions:
-#   contents: read
-#   pull-requests: write
+permissions:
+  pull-requests: write  # ← даёт и запись, и чтение
 
 jobs:
-  docs-validate:
-    name: 🧩 Validate Documentation
+  docs-ci:
+    name: 🧩 Validate & Publish Documentation
     runs-on: ubuntu-latest
     continue-on-error: ${{ github.event_name == 'pull_request' }}
 
     steps:
       # ─────────────────────────────────────────────
-      # 1️⃣ Клонируем репозиторий
+      # 1️⃣ Клонируем репозиторий (с историей)
       # ─────────────────────────────────────────────
       - name: 🧭 Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0   # нужно, чтобы видеть diff для PR
+          fetch-depth: 0
 
       # ─────────────────────────────────────────────
-      # 2️⃣ Подготавливаем Docker окружение
+      # 2️⃣ Собираем Docker окружение для линтеров
       # ─────────────────────────────────────────────
       - name: 🧰 Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -41,40 +41,27 @@ jobs:
           tags: docs-cli:ci
 
       # ─────────────────────────────────────────────
-      # 3️⃣ Определяем изменённые файлы и запускаем линтеры
+      # 3️⃣ Запускаем линтеры (только по изменённым файлам)
       # ─────────────────────────────────────────────
       - name: 🚀 Run Docs-as-Code Validation
-        id: run_linters
-        shell: bash
+        id: lint
         run: |
-          echo "🔧 Collecting changed files..."
-
-          # Определяем список изменённых файлов для проверки
+          echo "🔍 Detecting changed files..."
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            echo "📦 Mode: Pull Request"
             CHANGED_FILES=$(git diff --name-only origin/main...HEAD | grep -E '\.(md|adoc|ya?ml)$' || true)
           else
-            echo "📦 Mode: Push"
             CHANGED_FILES=$(git diff-tree --no-commit-id --name-only -r ${{ github.sha }} | grep -E '\.(md|adoc|ya?ml)$' || true)
           fi
-
-          echo "Changed files:"
           echo "$CHANGED_FILES"
-
           if [ -z "$CHANGED_FILES" ]; then
-            echo "✅ No documentation changes detected."
+            echo "✅ No doc changes."
             exit 0
           fi
-
-          echo "🚀 Running linters only for changed files..."
-          docker run --rm \
-            -v "$PWD":/work \
-            -w /work \
-            -e CHANGED_FILES="$CHANGED_FILES" \
-            docs-cli:ci bash .repo/ci/scripts/run-linters.sh
+          docker run --rm -v "$PWD":/work -w /work -e CHANGED_FILES="$CHANGED_FILES" docs-cli:ci \
+            bash .repo/ci/scripts/run-linters.sh
 
       # ─────────────────────────────────────────────
-      # 4️⃣ Публикуем артефакты (логи линтеров)
+      # 4️⃣ Публикуем отчёты линтеров
       # ─────────────────────────────────────────────
       - name: 📎 Upload Linter Reports
         if: always()
@@ -83,48 +70,68 @@ jobs:
           name: docs-quality-report
           path: artifacts/
 
-      # ─────────────────────────────────────────────
-      # 5️⃣ Формируем краткий отчёт для комментария PR
-      # ─────────────────────────────────────────────
-      - name: 🧾 Prepare short linter summaries
-        id: summarize
-        shell: bash
+
+      - name: 🧾 Generate PR comment summary
+        if: github.event_name == 'pull_request'
         run: |
-          summarize_log() {
+          summarize() {
             local file="$1"
             local title="$2"
+            echo "**${title}**"
             if [[ -f "$file" && -s "$file" ]]; then
-              echo "**${title}**"
               echo '```text'
               head -n 50 "$file"
               echo '```'
-              echo ""
             else
-              echo "**${title}**"
-              echo "_No results or file missing_"
-              echo ""
+              echo "_No issues detected_"
             fi
+            echo ""
           }
 
           {
             echo "## 🧩 Docs-as-Code CI Results"
-            summarize_log artifacts/markdownlint.log "Markdown"
-            summarize_log artifacts/asciidoc.log "AsciiDoc"
-            summarize_log artifacts/openapi.log "OpenAPI"
-            summarize_log artifacts/vale.log "Vale"
-          } > summary.md
+            echo ""
+            summarize artifacts/markdownlint.log "Markdown"
+            summarize artifacts/asciidoc.log "AsciiDoc"
+            summarize artifacts/openapi.log "OpenAPI"
+            summarize artifacts/vale.log "Vale"
+          } > summary.md    
 
-      # ─────────────────────────────────────────────
-      # 6️⃣ Комментарий в Pull Request (результаты)
-      # ─────────────────────────────────────────────
+      - name: 🔍 Read summary for PR comment
+        id: read_summary
+        if: github.event_name == 'pull_request'
+        run: |
+          if [ -f "summary.md" ]; then
+            echo "content<<EOF" >> "$GITHUB_OUTPUT"
+            cat summary.md >> "$GITHUB_OUTPUT"
+            echo "EOF" >> "$GITHUB_OUTPUT"
+          else
+            echo "content=⚠️ Summary not generated." >> "$GITHUB_OUTPUT"
+          fi
+
       - name: 💬 Post summary comment to PR
         if: github.event_name == 'pull_request'
+        continue-on-error: true
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           header: docs-lint
-          path: summary.md   # 👈 читаем файл напрямую, без message
-          append: false
-          recreate: true
-          delete: false
-          hide_classify: OUTDATED
+          message: ${{ steps.read_summary.outputs.content }}
 
+     
+
+
+
+      # ─────────────────────────────────────────────
+      # 6️⃣ Генерация HTML и публикация на GitHub Pages
+      # ─────────────────────────────────────────────
+      - name: 🧱 Generate HTML documentation
+        if: github.event_name == 'push'
+        run: docker run --rm -v "$PWD":/work -w /work docs-cli:ci \
+          doctoolchain . generateHTML -PconfigFile=.repo/config/docToolchainConfig.groovy
+
+      - name: 🚀 Deploy to GitHub Pages
+        if: github.event_name == 'push'
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: build/docs/html5
