@@ -97,9 +97,18 @@ jobs:
             summarize artifacts/vale.log "Vale"
           } > summary.md    
 
-      # ─────────────────────────────────────────────
-      # 5️⃣ Комментарий в PR с результатами
-      # ─────────────────────────────────────────────
+      - name: 🔍 Read summary for PR comment
+        id: read_summary
+        if: github.event_name == 'pull_request'
+        run: |
+          if [ -f "summary.md" ]; then
+            echo "content<<EOF" >> "$GITHUB_OUTPUT"
+            cat summary.md >> "$GITHUB_OUTPUT"
+            echo "EOF" >> "$GITHUB_OUTPUT"
+          else
+            echo "content=⚠️ Summary not generated." >> "$GITHUB_OUTPUT"
+          fi
+
       - name: 💬 Post summary comment to PR
         if: github.event_name == 'pull_request'
         continue-on-error: true
@@ -108,12 +117,7 @@ jobs:
           header: docs-lint
           message: ${{ steps.read_summary.outputs.content }}
 
-      - name: 💬 Post comment using sticky action
-        if: github.event_name == 'pull_request'
-        uses: marocchino/sticky-pull-request-comment@v2
-        with:
-          header: docs-lint
-          message: ${{ steps.read_summary.outputs.content }}
+     
 
 
 
