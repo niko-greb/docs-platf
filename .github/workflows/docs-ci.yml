@@ -7,10 +7,13 @@ on:
     branches: [ main ]
 
 permissions:
-  contents: read
+  contents: write      # ✅ нужно для публикации
   pull-requests: write
 
 jobs:
+  # ─────────────────────────────────────────────
+  # 🧩 Линтеры и валидация документации
+  # ─────────────────────────────────────────────
   docs-validate:
     name: 🧩 Validate Documentation
     runs-on: ubuntu-latest
@@ -104,3 +107,39 @@ jobs:
           recreate: true
           delete: false
           hide_classify: OUTDATED
+
+  # ─────────────────────────────────────────────
+  # 🌐 Публикация документации на GitHub Pages
+  # ─────────────────────────────────────────────
+  deploy-pages:
+    name: 🌐 Build & Deploy Docs to GitHub Pages
+    runs-on: ubuntu-latest
+    needs: docs-validate
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: 🧭 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Install Asciidoctor
+        run: |
+          sudo apt-get update && sudo apt-get install -y ruby-full build-essential zlib1g-dev
+          gem install --no-document asciidoctor
+
+      - name: 🏗️ Build HTML docs
+        run: |
+          mkdir -p build
+          find docs -type f -name "*.adoc" | while read -r f; do
+            out="build/${f%.adoc}.html"
+            mkdir -p "$(dirname "$out")"
+            echo "📄 Building $f -> $out"
+            asciidoctor "$f" -o "$out"
+          done
+
+      - name: 🚀 Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build
+          publish_branch: gh-pages
+          force_orphan: true
