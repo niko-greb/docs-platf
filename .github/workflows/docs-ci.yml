@@ -37,11 +37,6 @@ jobs:
           load: true
           tags: docs-cli:ci
 
-      - name: 🏗️ Build HTML docs
-        run: |
-          docker run --rm -v "$PWD":/work -w /work docs-cli:ci \
-            bash -lc "asciidoctor -D build docs/**/*.adoc"
-
       - name: 🚀 Run Docs-as-Code Validation
         id: run_linters
         shell: bash
@@ -123,6 +118,20 @@ jobs:
     if: github.ref == 'refs/heads/main'
 
     steps:
+      - name: 🧱 Build docs-cli image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: .repo/Dockerfile
+          push: false
+          load: true
+          tags: docs-cli:ci
+
+      - name: 🏗️ Build HTML docs
+        run: |
+          docker run --rm -v "$PWD":/work -w /work docs-cli:ci \
+            bash -lc "asciidoctor -D build docs/**/*.adoc"
+
       - name: 🧭 Checkout repository
         uses: actions/checkout@v4
 
