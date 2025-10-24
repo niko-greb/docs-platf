@@ -83,43 +83,24 @@ jobs:
       # ─────────────────────────────
       # 5️⃣ Формируем краткий отчёт в PR
       # ─────────────────────────────
-      - name: 🧾 Prepare short linter summaries
-        id: summarize
-        shell: bash
-        run: |
-          summarize_log() {
-            local file="$1"
-            local title="$2"
-            if [[ -f "$file" && -s "$file" ]]; then
-              echo "**${title}**"
-              echo '```text'
-              head -n 50 "$file"
-              echo '```'
-              echo ""
-            else
-              echo "**${title}**"
-              echo "_No results or file missing_"
-              echo ""
-            fi
-          }
-
-          {
-            echo "## 🧩 Docs-as-Code CI Results"
-            summarize_log artifacts/markdownlint.log "Markdown"
-            summarize_log artifacts/asciidoc.log "AsciiDoc"
-            summarize_log artifacts/openapi.log "OpenAPI"
-            summarize_log artifacts/vale.log "Vale"
-          } > summary.md
-
       - name: 💬 Post summary comment to PR
+        if: github.event_name == 'pull_request'
+        run: |
+          if [ -f summary.md ]; then
+            echo "content<<EOF" >> "$GITHUB_OUTPUT"
+            cat summary.md >> "$GITHUB_OUTPUT"
+            echo "EOF" >> "$GITHUB_OUTPUT"
+          else
+            echo "content=⚠️ Summary not found." >> "$GITHUB_OUTPUT"
+          fi
+        id: read_summary
+
+      - name: 💬 Post comment using sticky action
         if: github.event_name == 'pull_request'
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           header: docs-lint
-          path: summary.md
-          recreate: true
-          delete: false
-          hide_classify: OUTDATED
+          message: ${{ steps.read_summary.outputs.content }}
 
   # ─────────────────────────────────────────────
   # 6️⃣ Сборка и публикация документации (только при пуше в main)
@@ -134,15 +115,11 @@ jobs:
       - name: 🧭 Checkout repository
         uses: actions/checkout@v4
 
-      - name: 🧰 Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
       - name: 🏗️ Build docs-cli image
         uses: docker/build-push-action@v6
         with:
           context: .
           file: .repo/Dockerfile
-          push: false
           load: true
           tags: docs-cli:ci
 
@@ -153,10 +130,16 @@ jobs:
             -w /work \
             docs-cli:ci doctoolchain . generateHTML -PconfigFile=.repo/config/docToolchainConfig.groovy
 
+      - name: ✅ Verify HTML output
+        run: |
+          if [ ! -f build/docs/html5/index.html ]; then
+            echo "❌ HTML generation failed!"
+            exit 1
+          fi
+
       - name: 🚀 Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./build/html
-          publish_branch: gh-pages
+          publish_dir: ./build/docs/html5
           commit_message: "🚀 Publish docs [skip ci]"
