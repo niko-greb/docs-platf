@@ -1,37 +1,56 @@
 name: 🧱 Docs-as-Code CI
 
+# ─────────────────────────────────────────────
+# 🔔 Триггеры запуска
+# ─────────────────────────────────────────────
 on:
   push:
-    branches: [ main ]
+    branches: [ main ]      # запускаем при пуше в main → обновляем GitHub Pages
   pull_request:
-    branches: [ main ]
+    branches: [ main ]      # при PR → только валидация (линтеры и сборка, без деплоя)
+  workflow_dispatch:         # ручной запуск из вкладки Actions
+    inputs:
+      skip_lint:
+        description: "Пропустить линтеры (только для теста деплоя)"
+        required: false
+        default: "false"
 
+# ─────────────────────────────────────────────
+# ⚙️ Глобальные настройки
+# ─────────────────────────────────────────────
 permissions:
-  contents: write     # нужно для публикации на GitHub Pages
-  pages: write
+  contents: write            # нужно для публикации в GitHub Pages
+  pull-requests: write       # нужно для комментариев в PR
+  pages: write               # публикация GitHub Pages
   id-token: write
 
+concurrency:
+  group: "docs-ci"
+  cancel-in-progress: false
+
+# ─────────────────────────────────────────────
+# 🧩 Основная job: линтеры + сборка + деплой
+# ─────────────────────────────────────────────
 jobs:
-  docs-validate:
-    name: 🧩 Validate Documentation
+  docs-pipeline:
+    name: 🧩 Validate & Deploy Docs
     runs-on: ubuntu-latest
-    continue-on-error: ${{ github.event_name == 'pull_request' }}
+
+    env:
+      DOCKER_IMAGE: docs-cli:ci
 
     steps:
-      # ─────────────────────────────────────────────
-      # 1️⃣ Клонируем репозиторий
-      # ─────────────────────────────────────────────
+      # ─────────────────────────────
+      # 1️⃣ Получаем код
+      # ─────────────────────────────
       - name: 🧭 Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0  # нужно, чтобы видеть diff при PR
 
-      # ─────────────────────────────────────────────
-      # 2️⃣ Подготавливаем Docker окружение
-      # ─────────────────────────────────────────────
-      - name: 🧰 Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
+      # ─────────────────────────────
+      # 2️⃣ Собираем Docker образ
+      # ─────────────────────────────
       - name: 🏗️ Build docs-cli image
         uses: docker/build-push-action@v6
         with:
@@ -39,20 +58,22 @@ jobs:
           file: .repo/Dockerfile
           push: false
           load: true
-          tags: docs-cli:ci
+          tags: ${{ env.DOCKER_IMAGE }}
 
-      # ─────────────────────────────────────────────
-      # 3️⃣ Определяем изменённые файлы и запускаем линтеры
-      # ─────────────────────────────────────────────
+      # ─────────────────────────────
+      # 3️⃣ Запуск линтеров (Docs-as-Code)
+      # ─────────────────────────────
       - name: 🚀 Run Docs-as-Code Validation
+        if: ${{ github.event_name != 'push' || inputs.skip_lint != 'true' }}
         id: run_linters
-        shell: bash
         run: |
           echo "🔧 Collecting changed files..."
 
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "📦 Mode: Pull Request"
             CHANGED_FILES=$(git diff --name-only origin/main...HEAD | grep -E '\.(md|adoc|ya?ml)$' || true)
           else
+            echo "📦 Mode: Push"
             CHANGED_FILES=$(git diff-tree --no-commit-id --name-only -r ${{ github.sha }} | grep -E '\.(md|adoc|ya?ml)$' || true)
           fi
 
@@ -68,11 +89,12 @@ jobs:
             -v "$PWD":/work \
             -w /work \
             -e CHANGED_FILES="$CHANGED_FILES" \
-            docs-cli:ci bash .repo/ci/scripts/run-linters.sh
+            ${{ env.DOCKER_IMAGE }} \
+            bash .repo/ci/scripts/run-linters.sh
 
-      # ─────────────────────────────────────────────
-      # 4️⃣ Публикуем отчёты артефактов (для PR)
-      # ─────────────────────────────────────────────
+      # ─────────────────────────────
+      # 4️⃣ Публикуем отчёты линтеров как артефакты
+      # ─────────────────────────────
       - name: 📎 Upload Linter Reports
         if: always()
         uses: actions/upload-artifact@v4
@@ -84,8 +106,8 @@ jobs:
       # 5️⃣ Формируем краткий отчёт в PR
       # ─────────────────────────────
       - name: 🧾 Prepare short linter summaries
+        if: github.event_name == 'pull_request'
         id: summarize
-        shell: bash
         run: |
           summarize_log() {
             local file="$1"
@@ -121,9 +143,25 @@ jobs:
           delete: false
           hide_classify: OUTDATED
 
-  # ─────────────────────────────────────────────
-  # 6️⃣ Сборка и публикация документации (только при пуше в main)
-  # ─────────────────────────────────────────────
+      # ─────────────────────────────
+      # 6️⃣ Сборка документации → GitHub Pages
+      # ─────────────────────────────
+      # - name: 📚 Build site with Asciidoctor
+      #   if: github.event_name == 'push'
+      #   run: |
+      #     echo "🏗️ Building AsciiDoc site for GitHub Pages..."
+      #     mkdir -p build
+      #     docker run --rm -v "$PWD":/work -w /work ${{ env.DOCKER_IMAGE }} \
+      #       bash -lc "asciidoctor -r asciidoctor-diagram -D build docs/**/*.adoc"
+
+      # - name: 🚀 Deploy to GitHub Pages
+      #   if: github.event_name == 'push'
+      #   uses: peaceiris/actions-gh-pages@v4
+      #   with:
+      #     github_token: ${{ secrets.GITHUB_TOKEN }}
+      #     publish_dir: ./build
+      #     keep_files: false
+
   docs-publish:
     name: 🌐 Build & Deploy Docs to GitHub Pages
     runs-on: ubuntu-latest
@@ -134,15 +172,11 @@ jobs:
       - name: 🧭 Checkout repository
         uses: actions/checkout@v4
 
-      - name: 🧰 Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
       - name: 🏗️ Build docs-cli image
         uses: docker/build-push-action@v6
         with:
           context: .
           file: .repo/Dockerfile
-          push: false
           load: true
           tags: docs-cli:ci
 
@@ -153,10 +187,16 @@ jobs:
             -w /work \
             docs-cli:ci doctoolchain . generateHTML -PconfigFile=.repo/config/docToolchainConfig.groovy
 
+      - name: ✅ Verify HTML output
+        run: |
+          if [ ! -f build/docs/html5/index.html ]; then
+            echo "❌ HTML generation failed!"
+            exit 1
+          fi
+
       - name: 🚀 Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./build/html
-          publish_branch: gh-pages
+          publish_dir: ./build/docs/html5
           commit_message: "🚀 Publish docs [skip ci]"
