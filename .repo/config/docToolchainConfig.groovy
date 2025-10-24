@@ -4,15 +4,21 @@
 // ==============================================
 
 inputPath = 'docs'
-outputPath = 'build/docs'
-inputFiles = fileTree(dir: inputPath, include: '**/*.adoc').files
+outputPath = 'build'
 
-taskInputsDirs = ["${inputPath}/diagrams"]
+outputFormats = ['html']
 
-docFormats = ['html5']
-
-generateDiagrams = [
-    plantUMLDir   : "${inputPath}/diagrams",
-    outputDir     : "${inputPath}/diagrams",
-    outputFileExt : 'png'
+confluence = [
+    api        : 'https://confluence.example.com/rest/api/',
+    spaceKey   : 'DOCS',
+    ancestorId : '123456',
+    createSubpages: true
 ]
+
+diagrams = [
+    plantuml: [
+        format: 'png',
+        cache: true
+    ]
+]
+

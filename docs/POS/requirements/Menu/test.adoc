@@ -1,0 +1,34 @@
+== ⚙️Тест диаграммы (Mermaid)
+
+[mermaid]
+----
+graph TD
+    A[📦 docs-cli:ci] -->|включает| B[Python 3.11]
+    A --> C[Ruby 3.3]
+    A --> D[Node.js]
+    A --> E[Vale]
+
+    subgraph Утилиты
+        F[markdownlint-cli2]
+        G[mdformat]
+        H[asciidoctor]
+        I[spectral-cli]
+        J[rubocop]
+        K[vale]
+    end
+
+    subgraph Конфигурация
+        L[.repo/config/.vale.ini]
+        M[.repo/config/.spectral.yaml]
+        N[.repo/config/.markdownlint-cli2.jsonc]
+        O[.repo/config/.vale/styles/]
+    end
+
+    subgraph CI
+        P[.repo/ci/scripts/run-linters.sh]
+        Q[.repo/ci/scripts/run_doctest.rb]
+    end
+
+    A --> F & G & H & I & J & K
+    K --> O
+----
