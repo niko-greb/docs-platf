@@ -1,36 +1,56 @@
-name: 🧱 Docs-as-Code CI + GitHub Pages
+name: 🧱 Docs-as-Code CI
 
+# ─────────────────────────────────────────────
+# 🔔 Триггеры запуска
+# ─────────────────────────────────────────────
 on:
   push:
-    branches: [ main ]
+    branches: [ main ]      # запускаем при пуше в main → обновляем GitHub Pages
   pull_request:
-    branches: [ main ]
-  workflow_dispatch:
+    branches: [ main ]      # при PR → только валидация (линтеры и сборка, без деплоя)
+  workflow_dispatch:         # ручной запуск из вкладки Actions
+    inputs:
+      skip_lint:
+        description: "Пропустить линтеры (только для теста деплоя)"
+        required: false
+        default: "false"
 
+# ─────────────────────────────────────────────
+# ⚙️ Глобальные настройки
+# ─────────────────────────────────────────────
 permissions:
-  pull-requests: write  # ← даёт и запись, и чтение
+  contents: write            # нужно для публикации в GitHub Pages
+  pull-requests: write       # нужно для комментариев в PR
+  pages: write               # публикация GitHub Pages
+  id-token: write
 
+concurrency:
+  group: "docs-ci"
+  cancel-in-progress: false
+
+# ─────────────────────────────────────────────
+# 🧩 Основная job: линтеры + сборка + деплой
+# ─────────────────────────────────────────────
 jobs:
-  docs-ci:
-    name: 🧩 Validate & Publish Documentation
+  docs-pipeline:
+    name: 🧩 Validate & Deploy Docs
     runs-on: ubuntu-latest
-    continue-on-error: ${{ github.event_name == 'pull_request' }}
+
+    env:
+      DOCKER_IMAGE: docs-cli:ci
 
     steps:
-      # ─────────────────────────────────────────────
-      # 1️⃣ Клонируем репозиторий (с историей)
-      # ─────────────────────────────────────────────
+      # ─────────────────────────────
+      # 1️⃣ Получаем код
+      # ─────────────────────────────
       - name: 🧭 Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0  # нужно, чтобы видеть diff при PR
 
-      # ─────────────────────────────────────────────
-      # 2️⃣ Собираем Docker окружение для линтеров
-      # ─────────────────────────────────────────────
-      - name: 🧰 Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
+      # ─────────────────────────────
+      # 2️⃣ Собираем Docker образ
+      # ─────────────────────────────
       - name: 🏗️ Build docs-cli image
         uses: docker/build-push-action@v6
         with:
@@ -38,31 +58,43 @@ jobs:
           file: .repo/Dockerfile
           push: false
           load: true
-          tags: docs-cli:ci
+          tags: ${{ env.DOCKER_IMAGE }}
 
-      # ─────────────────────────────────────────────
-      # 3️⃣ Запускаем линтеры (только по изменённым файлам)
-      # ─────────────────────────────────────────────
+      # ─────────────────────────────
+      # 3️⃣ Запуск линтеров (Docs-as-Code)
+      # ─────────────────────────────
       - name: 🚀 Run Docs-as-Code Validation
-        id: lint
+        if: ${{ github.event_name != 'push' || inputs.skip_lint != 'true' }}
+        id: run_linters
         run: |
-          echo "🔍 Detecting changed files..."
+          echo "🔧 Collecting changed files..."
+
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "📦 Mode: Pull Request"
             CHANGED_FILES=$(git diff --name-only origin/main...HEAD | grep -E '\.(md|adoc|ya?ml)$' || true)
           else
+            echo "📦 Mode: Push"
             CHANGED_FILES=$(git diff-tree --no-commit-id --name-only -r ${{ github.sha }} | grep -E '\.(md|adoc|ya?ml)$' || true)
           fi
+
+          echo "Changed files:"
           echo "$CHANGED_FILES"
+
           if [ -z "$CHANGED_FILES" ]; then
-            echo "✅ No doc changes."
+            echo "✅ No documentation changes detected."
             exit 0
           fi
-          docker run --rm -v "$PWD":/work -w /work -e CHANGED_FILES="$CHANGED_FILES" docs-cli:ci \
+
+          docker run --rm \
+            -v "$PWD":/work \
+            -w /work \
+            -e CHANGED_FILES="$CHANGED_FILES" \
+            ${{ env.DOCKER_IMAGE }} \
             bash .repo/ci/scripts/run-linters.sh
 
-      # ─────────────────────────────────────────────
-      # 4️⃣ Публикуем отчёты линтеров
-      # ─────────────────────────────────────────────
+      # ─────────────────────────────
+      # 4️⃣ Публикуем отчёты линтеров как артефакты
+      # ─────────────────────────────
       - name: 📎 Upload Linter Reports
         if: always()
         uses: actions/upload-artifact@v4
@@ -70,68 +102,62 @@ jobs:
           name: docs-quality-report
           path: artifacts/
 
-
-      - name: 🧾 Generate PR comment summary
+      # ─────────────────────────────
+      # 5️⃣ Формируем краткий отчёт в PR
+      # ─────────────────────────────
+      - name: 🧾 Prepare short linter summaries
         if: github.event_name == 'pull_request'
+        id: summarize
         run: |
-          summarize() {
+          summarize_log() {
             local file="$1"
             local title="$2"
-            echo "**${title}**"
             if [[ -f "$file" && -s "$file" ]]; then
+              echo "**${title}**"
               echo '```text'
               head -n 50 "$file"
               echo '```'
+              echo ""
             else
-              echo "_No issues detected_"
+              echo "**${title}**"
+              echo "_No results or file missing_"
+              echo ""
             fi
-            echo ""
           }
 
           {
             echo "## 🧩 Docs-as-Code CI Results"
-            echo ""
-            summarize artifacts/markdownlint.log "Markdown"
-            summarize artifacts/asciidoc.log "AsciiDoc"
-            summarize artifacts/openapi.log "OpenAPI"
-            summarize artifacts/vale.log "Vale"
-          } > summary.md    
-
-      - name: 🔍 Read summary for PR comment
-        id: read_summary
-        if: github.event_name == 'pull_request'
-        run: |
-          if [ -f "summary.md" ]; then
-            echo "content<<EOF" >> "$GITHUB_OUTPUT"
-            cat summary.md >> "$GITHUB_OUTPUT"
-            echo "EOF" >> "$GITHUB_OUTPUT"
-          else
-            echo "content=⚠️ Summary not generated." >> "$GITHUB_OUTPUT"
-          fi
+            summarize_log artifacts/markdownlint.log "Markdown"
+            summarize_log artifacts/asciidoc.log "AsciiDoc"
+            summarize_log artifacts/openapi.log "OpenAPI"
+            summarize_log artifacts/vale.log "Vale"
+          } > summary.md
 
       - name: 💬 Post summary comment to PR
         if: github.event_name == 'pull_request'
-        continue-on-error: true
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           header: docs-lint
-          message: ${{ steps.read_summary.outputs.content }}
+          path: summary.md
+          recreate: true
+          delete: false
+          hide_classify: OUTDATED
 
-     
-
-
-
-      # ─────────────────────────────────────────────
-      # 6️⃣ Генерация HTML и публикация на GitHub Pages
-      # ─────────────────────────────────────────────
-      - name: 🧱 Generate HTML documentation
+      # ─────────────────────────────
+      # 6️⃣ Сборка документации → GitHub Pages
+      # ─────────────────────────────
+      - name: 📚 Build site with Asciidoctor
         if: github.event_name == 'push'
-        run: docker run --rm -v "$PWD":/work -w /work docs-cli:ci \
-          doctoolchain . generateHTML -PconfigFile=.repo/config/docToolchainConfig.groovy
+        run: |
+          echo "🏗️ Building AsciiDoc site for GitHub Pages..."
+          mkdir -p build
+          docker run --rm -v "$PWD":/work -w /work ${{ env.DOCKER_IMAGE }} \
+            bash -lc "asciidoctor -r asciidoctor-diagram -D build docs/**/*.adoc"
 
       - name: 🚀 Deploy to GitHub Pages
         if: github.event_name == 'push'
-        uses: peaceiris/actions-gh-pages@v3
+        uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: build/docs/html5
+          publish_dir: ./build
+          keep_files: false
