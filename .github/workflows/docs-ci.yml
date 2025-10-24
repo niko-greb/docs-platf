@@ -84,8 +84,8 @@ jobs:
       # 5️⃣ Формируем краткий отчёт в PR
       # ─────────────────────────────
       - name: 🧾 Prepare short linter summaries
-        if: github.event_name == 'pull_request'
         id: summarize
+        shell: bash
         run: |
           summarize_log() {
             local file="$1"
