@@ -124,9 +124,9 @@ RUN gem install --no-document \
 # ─────────────────────────────────────────────
 ENV DOCTOOLCHAIN_VERSION=3.4.2
 RUN wget -q https://github.com/docToolchain/docToolchain/releases/download/v${DOCTOOLCHAIN_VERSION}/doctoolchain-${DOCTOOLCHAIN_VERSION}.zip -O /tmp/dtc.zip && \
-    unzip -q /tmp/dtc.zip -d /opt/doctoolchain && \
+    unzip -q /tmp/dtc.zip -d /opt && \
     rm /tmp/dtc.zip && \
-    ln -s /opt/doctoolchain/bin/doctoolchain /usr/local/bin/doctoolchain
+    ln -s "/opt/docToolchain-${DOCTOOLCHAIN_VERSION}/bin/doctoolchain" /usr/local/bin/doctoolchain
 
 # ─────────────────────────────────────────────
 # 5️⃣ Vale (стили и проверки)
