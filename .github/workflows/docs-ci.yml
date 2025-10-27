@@ -7,13 +7,19 @@ on:
     branches: [ main ]
 
 permissions:
-  contents: write      # ✅ нужно для публикации
+  contents: write
   pull-requests: write
+  pages: write
+  id-token: write
+
+env:
+  IMAGE_NAME: docs-cli:ci
+  IMAGE_TAR: docs-cli.tar
 
 jobs:
-  # ─────────────────────────────────────────────
-  # 🧩 Линтеры и валидация документации
-  # ─────────────────────────────────────────────
+  # ───────────────────────────────────────────────
+  # 1️⃣ Проверка документации
+  # ───────────────────────────────────────────────
   docs-validate:
     name: 🧩 Validate Documentation
     runs-on: ubuntu-latest
@@ -25,42 +31,37 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: 🧰 Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      - name: 🏗️ Build docs-cli Docker image
+        run: |
+          echo "🔨 Building Docker image..."
+          docker build -t $IMAGE_NAME -f .repo/Dockerfile .
+          docker save $IMAGE_NAME > $IMAGE_TAR
 
-      - name: 🧱 Build docs-cli image
-        uses: docker/build-push-action@v6
+      - name: 📦 Upload Docker image as artifact
+        uses: actions/upload-artifact@v4
         with:
-          context: .
-          file: .repo/Dockerfile
-          push: false
-          load: true
-          tags: docs-cli:ci
+          name: docs-cli-image
+          path: ${{ env.IMAGE_TAR }}
 
       - name: 🚀 Run Docs-as-Code Validation
         id: run_linters
-        shell: bash
         run: |
           echo "🔧 Collecting changed files..."
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            echo "📦 Mode: Pull Request"
             CHANGED_FILES=$(git diff --name-only origin/main...HEAD | grep -E '\.(md|adoc|ya?ml)$' || true)
           else
-            echo "📦 Mode: Push"
             CHANGED_FILES=$(git diff-tree --no-commit-id --name-only -r ${{ github.sha }} | grep -E '\.(md|adoc|ya?ml)$' || true)
           fi
 
-          echo "$CHANGED_FILES"
           if [ -z "$CHANGED_FILES" ]; then
             echo "✅ No documentation changes detected."
             exit 0
           fi
 
           docker run --rm \
-            -v "$PWD":/work \
-            -w /work \
+            -v "$PWD":/work -w /work \
             -e CHANGED_FILES="$CHANGED_FILES" \
-            docs-cli:ci bash .repo/ci/scripts/run-linters.sh
+            $IMAGE_NAME bash .repo/ci/scripts/run-linters.sh
 
       - name: 📎 Upload Linter Reports
         if: always()
@@ -108,52 +109,36 @@ jobs:
           delete: false
           hide_classify: OUTDATED
 
-  # ─────────────────────────────────────────────
-  # 🌐 Публикация документации на GitHub Pages
-  # ─────────────────────────────────────────────
-  deploy-pages:
+  # ───────────────────────────────────────────────
+  # 2️⃣ Сборка и публикация документации
+  # ───────────────────────────────────────────────
+  deploy-docs:
     name: 🌐 Build & Deploy Docs to GitHub Pages
     runs-on: ubuntu-latest
     needs: docs-validate
     if: github.ref == 'refs/heads/main'
 
     steps:
-      - name: 🧱 Build docs-cli image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: .repo/Dockerfile
-          push: false
-          load: true
-          tags: docs-cli:ci
-
-      - name: 🏗️ Build HTML docs
-        run: |
-          docker run --rm -v "$PWD":/work -w /work docs-cli:ci \
-            bash -lc "asciidoctor -D build docs/**/*.adoc"
-
       - name: 🧭 Checkout repository
         uses: actions/checkout@v4
 
-      - name: ⚙️ Install Asciidoctor
-        run: |
-          sudo apt-get update && sudo apt-get install -y ruby-full build-essential zlib1g-dev
-          gem install --no-document asciidoctor
+      - name: 📦 Download Docker image
+        uses: actions/download-artifact@v4
+        with:
+          name: docs-cli-image
+          path: .
 
-      - name: 🏗️ Build HTML docs
+      - name: 🔄 Load Docker image
+        run: docker load < $IMAGE_TAR
+
+      - name: 🧰 Generate static documentation
         run: |
-          mkdir -p build
-          find docs -type f -name "*.adoc" | while read -r f; do
-            out="build/${f%.adoc}.html"
-            mkdir -p "$(dirname "$out")"
-            echo "📄 Building $f -> $out"
-            asciidoctor "$f" -o "$out"
-          done
+          docker run --rm -v "$PWD":/work -w /work $IMAGE_NAME \
+            bash -lc "asciidoctor -R docs -D build-html -o index.html README.adoc"
 
       - name: 🚀 Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./build
+          publish_dir: ./build-html
           publish_branch: gh-pages
-          force_orphan: true
