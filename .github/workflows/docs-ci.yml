@@ -87,10 +87,20 @@ jobs:
       - name: 🧭 Checkout repository
         uses: actions/checkout@v4
 
-      - name: 🧰 Prepare environment
-        run: |
-          mkdir -p build-html
-          echo "✅ Created build-html directory"
+      - name: 🧰 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🏗️ Build docs-cli image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: .repo/Dockerfile
+          push: false
+          load: true
+          tags: docs-cli:ci
+
+      - name: 🧰 Prepare build directory
+        run: mkdir -p build-html
 
       - name: 🏗️ Generate static documentation
         run: |
@@ -112,4 +122,5 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./build-html
+
 
