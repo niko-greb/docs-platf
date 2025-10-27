@@ -12,14 +12,10 @@ permissions:
   pages: write
   id-token: write
 
-env:
-  IMAGE_NAME: docs-cli:ci
-  IMAGE_TAR: docs-cli.tar
-
 jobs:
-  # ───────────────────────────────────────────────
+  # ─────────────────────────────────────────────
   # 1️⃣ Проверка документации
-  # ───────────────────────────────────────────────
+  # ─────────────────────────────────────────────
   docs-validate:
     name: 🧩 Validate Documentation
     runs-on: ubuntu-latest
@@ -31,37 +27,40 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: 🏗️ Build docs-cli Docker image
-        run: |
-          echo "🔨 Building Docker image..."
-          docker build -t $IMAGE_NAME -f .repo/Dockerfile .
-          docker save $IMAGE_NAME > $IMAGE_TAR
+      - name: 🧰 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-      - name: 📦 Upload Docker image as artifact
-        uses: actions/upload-artifact@v4
+      - name: 🏗️ Build docs-cli image
+        uses: docker/build-push-action@v6
         with:
-          name: docs-cli-image
-          path: ${{ env.IMAGE_TAR }}
+          context: .
+          file: .repo/Dockerfile
+          push: false
+          load: true
+          tags: docs-cli:ci
 
       - name: 🚀 Run Docs-as-Code Validation
-        id: run_linters
         run: |
           echo "🔧 Collecting changed files..."
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "📦 Mode: Pull Request"
             CHANGED_FILES=$(git diff --name-only origin/main...HEAD | grep -E '\.(md|adoc|ya?ml)$' || true)
           else
+            echo "📦 Mode: Push"
             CHANGED_FILES=$(git diff-tree --no-commit-id --name-only -r ${{ github.sha }} | grep -E '\.(md|adoc|ya?ml)$' || true)
           fi
 
+          echo "$CHANGED_FILES"
           if [ -z "$CHANGED_FILES" ]; then
             echo "✅ No documentation changes detected."
             exit 0
           fi
 
           docker run --rm \
-            -v "$PWD":/work -w /work \
+            -v "$PWD":/work \
+            -w /work \
             -e CHANGED_FILES="$CHANGED_FILES" \
-            $IMAGE_NAME bash .repo/ci/scripts/run-linters.sh
+            docs-cli:ci bash .repo/ci/scripts/run-linters.sh
 
       - name: 📎 Upload Linter Reports
         if: always()
@@ -70,48 +69,9 @@ jobs:
           name: docs-quality-report
           path: artifacts/
 
-      - name: 🧾 Prepare short linter summaries
-        id: summarize
-        shell: bash
-        run: |
-          summarize_log() {
-            local file="$1"
-            local title="$2"
-            if [[ -f "$file" && -s "$file" ]]; then
-              echo "**${title}**"
-              echo '```text'
-              head -n 50 "$file"
-              echo '```'
-              echo ""
-            else
-              echo "**${title}**"
-              echo "_No results or file missing_"
-              echo ""
-            fi
-          }
-
-          {
-            echo "## 🧩 Docs-as-Code CI Results"
-            summarize_log artifacts/markdownlint.log "Markdown"
-            summarize_log artifacts/asciidoc.log "AsciiDoc"
-            summarize_log artifacts/openapi.log "OpenAPI"
-            summarize_log artifacts/vale.log "Vale"
-          } > summary.md
-
-      - name: 💬 Post summary comment to PR
-        if: github.event_name == 'pull_request'
-        uses: marocchino/sticky-pull-request-comment@v2
-        with:
-          header: docs-lint
-          path: summary.md
-          append: false
-          recreate: true
-          delete: false
-          hide_classify: OUTDATED
-
-  # ───────────────────────────────────────────────
-  # 2️⃣ Сборка и публикация документации
-  # ───────────────────────────────────────────────
+  # ─────────────────────────────────────────────
+  # 2️⃣ Генерация и публикация на GitHub Pages
+  # ─────────────────────────────────────────────
   deploy-docs:
     name: 🌐 Build & Deploy Docs to GitHub Pages
     runs-on: ubuntu-latest
@@ -122,23 +82,37 @@ jobs:
       - name: 🧭 Checkout repository
         uses: actions/checkout@v4
 
-      - name: 📦 Download Docker image
-        uses: actions/download-artifact@v4
+      - name: 🧰 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🏗️ Load existing docs-cli image (cached)
+        uses: docker/build-push-action@v6
         with:
-          name: docs-cli-image
-          path: .
+          context: .
+          file: .repo/Dockerfile
+          push: false
+          load: true
+          tags: docs-cli:ci
 
-      - name: 🔄 Load Docker image
-        run: docker load < $IMAGE_TAR
-
-      - name: 🧰 Generate static documentation
+      - name: 🧰 Generate documentation via Doctoolchain
         run: |
-          docker run --rm -v "$PWD":/work -w /work $IMAGE_NAME \
-            bash -lc "asciidoctor -R docs -D build-html -o index.html README.adoc"
+          mkdir -p build-html
+          docker run --rm -v "$PWD":/work -w /work docs-cli:ci \
+            bash -lc "doctoolchain . generateHTML -PconfigFile=.repo/config/docToolchainConfig.groovy"
 
-      - name: 🚀 Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
+          echo "✅ Documentation generated in build-html/"
+          ls -R build-html
+
+      - name: 🚚 Move index.html to root
+        run: |
+          if [ -f build-html/index.html ]; then
+            mv build-html/index.html .
+          fi
+
+      - name: 🌍 Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./build-html
+          publish_dir: build-html
           publish_branch: gh-pages
+          cname: ""

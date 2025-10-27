@@ -1,0 +1,84 @@
+# =============================================
+# ⚙️  Docs-as-Code Git Attributes
+# Управление типами файлов, диффами и переносами строк
+# =============================================
+
+# ------------------------
+# Общие правила
+# ------------------------
+* text=auto eol=lf
+*.sh text eol=lf
+*.py text eol=lf
+*.rb text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.json text eol=lf
+*.jsonc text eol=lf
+*.ini text eol=lf
+*.conf text eol=lf
+*.md text eol=lf diff=markdown
+*.adoc text eol=lf diff=asciidoc
+*.txt text eol=lf
+*.html text eol=lf
+*.xml text eol=lf
+*.groovy text eol=lf
+*.gitignore text eol=lf
+*.gitattributes text eol=lf
+
+# ------------------------
+# Конфигурация и CI-файлы
+# ------------------------
+*.yml linguist-language=YAML
+*.yaml linguist-language=YAML
+.repo/** linguist-documentation
+.github/** linguist-vendored
+
+# ------------------------
+# Документация
+# ------------------------
+docs/** text eol=lf
+docs/**/*.adoc diff=asciidoc
+docs/**/*.md diff=markdown
+docs/**/*.yaml linguist-language=YAML
+docs/**/*.yml linguist-language=YAML
+
+# ------------------------
+# Стили и конфиги Vale, Spectral, Markdownlint
+# ------------------------
+.repo/config/.vale.ini text
+.repo/config/.spectral.yaml text
+.repo/config/.markdownlint-cli2.jsonc text
+.repo/config/.vale/styles/** text linguist-documentation
+
+# ------------------------
+# Скрипты CI
+# ------------------------
+.repo/ci/scripts/** text eol=lf
+
+# ------------------------
+# Бинарные файлы и изображения
+# ------------------------
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.svg binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.tar binary
+*.tar.gz binary
+*.tgz binary
+
+# ------------------------
+# Исключения и артефакты
+# ------------------------
+artifacts/** binary linguist-generated
+build-html/** binary linguist-generated
+*.log text linguist-generated
+
+# ------------------------
+# Windows специфичные исключения
+# ------------------------
+*.bat text eol=crlf
+*.cmd text eol=crlf
