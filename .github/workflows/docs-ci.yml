@@ -105,7 +105,7 @@ jobs:
       - name: 🏗️ Generate static documentation
         run: |
           docker run --rm -v "$PWD":/project -w /project docs-cli:ci \
-            bash -lc "doctoolchain . generateHTML -PconfigFile=.repo/config/docToolchainConfig.groovy"
+            . generateHTML -PconfigFile=.repo/config/docToolchainConfig.groovy
 
       - name: 🧾 Copy index.html to root (for GitHub Pages)
         run: |
