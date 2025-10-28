@@ -93,7 +93,7 @@ jobs:
       - name: 🏗️ Generate HTML
         run: |
           docker run --rm -v "$PWD":/project -w /project docs-dtc:ci \
-            . generateHTML -PconfigFile=.repo/config/docToolchainConfig.groovy
+            . generateHTML
 
       - name: ✅ Verify HTML output
         run: |
