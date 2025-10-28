@@ -11,5 +11,5 @@ COPY .repo/config/ /project/.repo/config/
 # COPY .repo/ci/scripts/ /project/.repo/ci/scripts/
 
 # Устанавливаем точку входа (как в официальном образе)
-ENTRYPOINT ["/opt/doctoolchain/bin/doctoolchain"]
-CMD ["--help"]
+# ENTRYPOINT ["/opt/doctoolchain/bin/doctoolchain"]
+# CMD ["--help"]
