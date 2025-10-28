@@ -11,12 +11,12 @@ outputPath = 'build'
 // outputFormats = ['html']  // ← закомментируйте, если ошибка сохраняется
 
 // Диаграммы
-diagrams = [
-    plantuml: [
-        format: 'png',
-        cache : true
-    ]
-]
+// diagrams = [
+//     plantuml: [
+//         format: 'png',
+//         cache : true
+//     ]
+// ]
 
 // // Confluence (уберите пробелы в URL!)
 // confluence = [
