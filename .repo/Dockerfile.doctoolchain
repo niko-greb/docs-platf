@@ -1,0 +1,15 @@
+# Используем официальный образ как базу — он уже содержит Java 17, Gradle 8.1.1, DocToolchain 3.4.2
+FROM doctoolchain/doctoolchain:v3.4.2
+
+# Устанавливаем рабочую директорию (как в официальном образе)
+WORKDIR /project
+
+# Копируем ваши конфиги (Vale, Spectral, DocToolchain и т.д.)
+COPY .repo/config/ /project/.repo/config/
+
+# (Опционально) Если у вас есть кастомные скрипты
+# COPY .repo/ci/scripts/ /project/.repo/ci/scripts/
+
+# Устанавливаем точку входа (как в официальном образе)
+ENTRYPOINT ["/opt/doctoolchain/bin/doctoolchain"]
+CMD ["--help"]

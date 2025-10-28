@@ -1,19 +1,14 @@
-// ==============================================
-// docToolchainConfig.groovy
-// Конфигурация doctoolchain для генерации диаграмм и HTML
-// ==============================================
-
 inputPath = 'docs'
 outputPath = 'build'
 
 outputFormats = ['html']
 
-confluence = [
-    api        : 'https://confluence.example.com/rest/api/',
-    spaceKey   : 'DOCS',
-    ancestorId : '123456',
-    createSubpages: true
-]
+// confluence = [
+//     api        : 'https://confluence.example.com/rest/api/  ',
+//     spaceKey   : 'DOCS',
+//     ancestorId : '123456',
+//     createSubpages: true
+// ]
 
 diagrams = [
     plantuml: [
@@ -21,4 +16,3 @@ diagrams = [
         cache: true
     ]
 ]
-

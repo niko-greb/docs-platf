@@ -34,7 +34,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: .repo/Dockerfile
+          file: .repo/Dockerfile.lint
           push: false
           load: true
           tags: docs-cli:ci
@@ -94,7 +94,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: .repo/Dockerfile
+          file: .repo/Dockerfile.doctoolchain
           push: false
           load: true
           tags: docs-cli:ci
@@ -104,7 +104,7 @@ jobs:
 
       - name: 🏗️ Generate static documentation
         run: |
-          docker run --rm -v "$PWD":/work -w /work docs-cli:ci \
+          docker run --rm -v "$PWD":/project -w /project docs-cli:ci \
             bash -lc "doctoolchain . generateHTML -PconfigFile=.repo/config/docToolchainConfig.groovy"
 
       - name: 🧾 Copy index.html to root (for GitHub Pages)
@@ -121,6 +121,6 @@ jobs:
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./build-html
+          publish_dir: ./build/html5
 
 
