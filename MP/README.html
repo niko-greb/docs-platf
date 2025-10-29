@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 2.0.23">
-<title>Документация платформы</title>
+<title>📚 Документация: MP</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
 /*! Asciidoctor default stylesheet | MIT License | https://asciidoctor.org */
@@ -434,80 +434,111 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 @media amzn-kf8{#header,#content,#footnotes,#footer{padding:0}}
 </style>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.3/styles/github.min.css">
 </head>
-<body class="book toc2 toc-left">
+<body class="article">
 <div id="header">
-<h1>Документация платформы</h1>
+<h1>📚 Документация: MP</h1>
 <div class="details">
 <span id="revnumber">version unspecified</span>
 </div>
-<div id="toc" class="toc2">
+<div id="toc" class="toc">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
-<li><a href="#_обзор">1. Обзор</a></li>
-<li><a href="#_модули">2. Модули</a>
-<ul class="sectlevel2">
-<li><a href="#_mp_merchant_platform">2.1. 📱 MP (Merchant Platform)</a></li>
-<li><a href="#_pos_point_of_sale">2.2. 🧾 POS (Point of Sale)</a></li>
-</ul>
-</li>
-<li><a href="#_общие_компоненты">3. Общие компоненты</a></li>
+<li><a href="#_️_структура_документации">🗂️ Структура документации</a></li>
+<li><a href="#_основные_разделы">🔗 Основные разделы</a></li>
+<li><a href="#_как_внести_изменения">🆘 Как внести изменения?</a></li>
 </ul>
 </div>
 </div>
 <div id="content">
-<div class="sect1">
-<h2 id="_обзор"><a class="anchor" href="#_обзор"></a>1. Обзор</h2>
+<div id="preamble">
 <div class="sectionbody">
+<div class="quoteblock">
+<blockquote>
+<em>Актуальная техническая документация для проекта <strong>MP</strong></em>
+</blockquote>
+</div>
+<hr>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_️_структура_документации"><a class="anchor" href="#_️_структура_документации"></a>🗂️ Структура документации</h2>
+<div class="sectionbody">
+<div class="listingblock">
+<div class="content">
+<pre>Failed to generate image: PlantUML preprocessing failed: [From &lt;input&gt; (line 2) ]
+
+@startuml
+docs/
+^^^^^
+ Syntax Error?
+
+docs/
+└── MP/
+    ├── api/
+    │   ├── schemas/
+    │   │   ├── errors/
+    │   │   └── OrderResponse.adoc
+    │   └── {модуль}/
+    │       └── v7/
+    │           └── GET_api_v7_restaurants.yml
+    ├── requirements/
+    │   └── {модуль}/
+    │       ├── UseCases/
+    │       ├── Images/
+    │       ├── Diagrams/
+    │       └── Database/
+    ├── accesses.md
+    └── shared/
+        └── glossary.md</pre>
+</div>
+</div>
+<hr>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_основные_разделы"><a class="anchor" href="#_основные_разделы"></a>🔗 Основные разделы</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p><a href="api/Back/v7/GET_api_v7_restaurants.yml">API: Back</a></p>
+</li>
+<li>
+<p><a href="api/WEB/v7/GET_api_v7_restaurants.yml">API: WEB</a></p>
+</li>
+<li>
+<p><a href="shared/glossary.md">Глоссарий</a> — общие термины</p>
+</li>
+</ul>
+</div>
+<hr>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_как_внести_изменения"><a class="anchor" href="#_как_внести_изменения"></a>🆘 Как внести изменения?</h2>
+<div class="sectionbody">
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Отредактируйте нужный файл.</p>
+</li>
+<li>
+<p>Создайте Pull Request в <code>main</code>.</p>
+</li>
+<li>
+<p>Изменения проверит системный аналитик.</p>
+</li>
+</ol>
+</div>
+<div class="quoteblock">
+<blockquote>
+💡 Подсказка: используйте шаблоны в <code>/docs/shared/templates/</code>.
+</blockquote>
+</div>
+<hr>
 <div class="paragraph">
-<p>Добро пожаловать в централизованную документацию проекта.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_модули"><a class="anchor" href="#_модули"></a>2. Модули</h2>
-<div class="sectionbody">
-<div class="sect2">
-<h3 id="_mp_merchant_platform"><a class="anchor" href="#_mp_merchant_platform"></a>2.1. 📱 MP (Merchant Platform)</h3>
-<div class="ulist">
-<ul>
-<li>
-<p>include::MP/README.adoc[Обзор MP]</p>
-</li>
-<li>
-<p>include::MP/api/schemas/Dish.adoc[Схема Dish]</p>
-</li>
-</ul>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_pos_point_of_sale"><a class="anchor" href="#_pos_point_of_sale"></a>2.2. 🧾 POS (Point of Sale)</h3>
-<div class="ulist">
-<ul>
-<li>
-<p>include::MP/README.adoc[Обзор POS]</p>
-</li>
-<li>
-<p>include::POS/requirements/Menu/Menu.adoc[Требования к меню]</p>
-</li>
-</ul>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_общие_компоненты"><a class="anchor" href="#_общие_компоненты"></a>3. Общие компоненты</h2>
-<div class="sectionbody">
-<div class="ulist">
-<ul>
-<li>
-<p>include::shared/errors.adoc[Стандартные ошибки]</p>
-</li>
-<li>
-<p>include::shared/headers-auth.adoc[Заголовки аутентификации]</p>
-</li>
-</ul>
+<p><em>Документация обновлена: {revdate}</em></p>
 </div>
 </div>
 </div>
@@ -518,12 +549,5 @@ Version unspecified<br>
 Last updated 2025-10-29 10:10:07 UTC
 </div>
 </div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.3/highlight.min.js"></script>
-<script>
-if (!hljs.initHighlighting.called) {
-  hljs.initHighlighting.called = true
-  ;[].slice.call(document.querySelectorAll('pre.highlight > code[data-lang]')).forEach(function (el) { hljs.highlightBlock(el) })
-}
-</script>
 </body>
 </html>
