@@ -14,19 +14,16 @@
 
 === 📱 MP (Merchant Platform)
 
-- xref:MP/README.adoc[Обзор MP]
-- xref:MP/api/schemas/Dish.adoc[Схема Dish]
+- include::MP/README.adoc[Обзор MP]
+- include::MP/api/schemas/Dish.adoc[Схема Dish]
 
 === 🧾 POS (Point of Sale)
 
-- xref:POS/README.adoc[Обзор POS]
-- xref:POS/requirements/Menu/Menu.adoc[Требования к меню]
+- include::MP/README.adoc[Обзор POS]
+- include::POS/requirements/Menu/Menu.adoc[Требования к меню]
 
 == Общие компоненты
 
-- xref:shared/errors.adoc[Стандартные ошибки]
-- xref:shared/headers-auth.adoc[Заголовки аутентификации]
+- include::shared/errors.adoc[Стандартные ошибки]
+- include::shared/headers-auth.adoc[Заголовки аутентификации]
 
-== Тестовые примеры
-
-- xref:testcases/03_bad_asciidoc.adoc[Пример AsciiDoc (для тестов)]
