@@ -1,15 +1,22 @@
-# Используем официальный образ как базу — он уже содержит Java 17, Gradle 8.1.1, DocToolchain 3.4.2
+# Используем официальный образ doctoolchain с Gradle и JDK
 FROM doctoolchain/doctoolchain:v3.4.2
 
-# Устанавливаем рабочую директорию (как в официальном образе)
+# Работаем от root (в этом образе gradle-пользователя нет)
+USER root
+
+# Устанавливаем рабочую директорию
 WORKDIR /project
 
-# Копируем ваши конфиги (Vale, Spectral, DocToolchain и т.д.)
+# Копируем конфиги
 COPY .repo/config/ /project/.repo/config/
 
-# (Опционально) Если у вас есть кастомные скрипты
-# COPY .repo/ci/scripts/ /project/.repo/ci/scripts/
+# Создаём исполняемый alias под doctoolchain (обёртка над gradle)
+RUN echo '#!/usr/bin/env bash\nexec /opt/gradle/bin/gradle -p /project "$@"' > /usr/local/bin/doctoolchain && \
+    chmod +x /usr/local/bin/doctoolchain
 
-# Устанавливаем точку входа (как в официальном образе)
-# ENTRYPOINT ["/opt/doctoolchain/bin/doctoolchain"]
-# CMD ["--help"]
+# Проверим доступность gradle
+RUN /opt/gradle/bin/gradle --version || echo "Gradle wrapper OK"
+
+# Устанавливаем ENTRYPOINT для удобного вызова doctoolchain
+ENTRYPOINT ["doctoolchain"]
+CMD ["--help"]
