@@ -1,0 +1,86 @@
+stages:
+  - validate
+  - build
+  - deploy
+
+variables:
+  DOCKER_BUILDKIT: 1
+
+# ─────────────────────────────────────────────
+# 1️⃣ Проверка документации (линтеры)
+# ─────────────────────────────────────────────
+docs-validate:
+  stage: validate
+  image: docker:27
+  services:
+    - docker:dind
+  script:
+    - echo "🔧 Building linters image..."
+    - docker build -t docs-linters:ci -f .repo/Dockerfile.linters .
+    - echo "🔍 Running linters..."
+    - |
+      if [ "$CI_PIPELINE_SOURCE" = "merge_request_event" ]; then
+        CHANGED_FILES=$(git diff --name-only origin/main...HEAD | grep -E '\.(adoc|ya?ml)$' || true)
+      else
+        CHANGED_FILES=$(git diff-tree --no-commit-id --name-only -r "$CI_COMMIT_SHA" | grep -E '\.(adoc|ya?ml)$' || true)
+      fi
+      if [ -z "$CHANGED_FILES" ]; then
+        echo "✅ No documentation changes detected."
+        exit 0
+      fi
+      docker run --rm \
+        -v "$CI_PROJECT_DIR":/project \
+        -w /project \
+        -e CHANGED_FILES="$CHANGED_FILES" \
+        docs-linters:ci bash .repo/ci/scripts/run-linters.sh
+  artifacts:
+    when: always
+    paths:
+      - artifacts/
+    expire_in: 1 week
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+# ─────────────────────────────────────────────
+# 2️⃣ Генерация HTML (опционально, для артефактов)
+# ─────────────────────────────────────────────
+# build-docs:
+#   stage: build
+#   needs: ["docs-validate"]
+#   image: docker:27
+#   services:
+#     - docker:dind
+#   script:
+#     - docker build -t docs-dtc:ci -f .repo/Dockerfile.doctoolchain .
+#     - docker run --rm -v "$CI_PROJECT_DIR":/project -w /project docs-dtc:ci \
+#         doctoolchain . generateHTML
+#   artifacts:
+#     paths:
+#       - build/html5/
+#     expire_in: 1 week
+#   rules:
+#     - if: '$CI_COMMIT_BRANCH == "main"'
+
+# ─────────────────────────────────────────────
+# 3️⃣ Публикация в Confluence
+# ─────────────────────────────────────────────
+publish-to-confluence:
+  stage: deploy
+  needs: ["build-docs"]
+  image: docker:27
+  services:
+    - docker:dind
+  script:
+    - docker build -t docs-dtc:ci -f .repo/Dockerfile.doctoolchain .
+    - docker run --rm \
+        -v "$CI_PROJECT_DIR":/project \
+        -w /project \
+        -e CONFLUENCE_TOKEN="$CONFLUENCE_TOKEN" \
+        docs-dtc:ci \
+        doctoolchain . publishToConfluence
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+  variables:
+    # Передаём токен безопасно (не в логах)
+    CONFLUENCE_TOKEN: "$CONFLUENCE_API_TOKEN"
