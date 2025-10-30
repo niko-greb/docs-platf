@@ -16,3 +16,10 @@ diagrams = [
         cache: true
     ]
 ]
+
+// confluence = [
+//     api          : 'https://your-domain.atlassian.net/wiki/rest/api/',
+//     spaceKey     : 'DOCS',
+//     ancestorId   : '123456',  // ID родительской страницы
+//     createSubpages: true
+// ]

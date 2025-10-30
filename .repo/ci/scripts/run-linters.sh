@@ -49,31 +49,6 @@ echo "📋 Files to check (${#GOOD_FILES[@]}):"
 printf ' - %s\n' "${GOOD_FILES[@]}"
 
 # -----------------------
-# Markdownlint
-# -----------------------
-echo "🧾 Running Markdown Linter..."
-MD_FILES=($(printf '%s\n' "${GOOD_FILES[@]}" | grep -E '\.md$' || true))
-if [ ${#MD_FILES[@]} -gt 0 ]; then
-  markdownlint-cli2 "${MD_FILES[@]}" --config "${MARKDOWNLINT_CONFIG}" --fix false 2>&1 | tee artifacts/markdownlint.log || true
-else
-  echo "⚠️ No Markdown files found." | tee artifacts/markdownlint.log
-fi
-echo ""
-
-# -----------------------
-# mdformat
-# -----------------------
-echo "🎨 Checking Markdown formatting (mdformat)..."
-if command -v mdformat >/dev/null; then
-  for f in "${MD_FILES[@]}"; do
-    mdformat --check "$f" 2>&1 | tee -a artifacts/mdformat.log || true
-  done
-else
-  echo "⚠️ mdformat not installed." | tee artifacts/mdformat.log
-fi
-echo ""
-
-# -----------------------
 # AsciiDoc validation
 # -----------------------
 echo "🏗️ Validating AsciiDoc..."

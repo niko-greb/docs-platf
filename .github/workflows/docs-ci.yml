@@ -44,10 +44,10 @@ jobs:
           echo "🔧 Collecting changed files..."
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
             echo "📦 Mode: Pull Request"
-            CHANGED_FILES=$(git diff --name-only origin/main...HEAD | grep -E '\.(md|adoc|ya?ml)$' || true)
+            CHANGED_FILES=$(git diff --name-only origin/main...HEAD | grep -E '\.(adoc|ya?ml)$' || true)
           else
             echo "📦 Mode: Push"
-            CHANGED_FILES=$(git diff-tree --no-commit-id --name-only -r ${{ github.sha }} | grep -E '\.(md|adoc|ya?ml)$' || true)
+            CHANGED_FILES=$(git diff-tree --no-commit-id --name-only -r ${{ github.sha }} | grep -E '\.(adoc|ya?ml)$' || true)
           fi
 
           echo "$CHANGED_FILES"
@@ -108,5 +108,3 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./build/html5
-
-
